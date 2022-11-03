@@ -1,8 +1,8 @@
 # LiDAR Viewer
-Renders the lidar data from the KITTI Benchmark[1].
+Renders the lidar data from the KITTI Benchmark[1,2].
 
 ## TODO
-- [ ] Understand data
+- [x] Understand data
 - [ ] Extract data in Rust
 - [ ] Extract data in Bevy
 - [ ] Render a frame
@@ -15,6 +15,6 @@ Renders the lidar data from the KITTI Benchmark[1].
 - [ ] Load files dynamically
 
 ## References
-[1]&nbsp;&nbsp;&nbsp;Andreas Geigerand Philip Lenz, and Raquel Urtasun. Are we
-ready for Autonomous Driving? The KITTI Vision Benchmark Suite. In Proceedings of the IEEE Conference on Computer Vision
-and Pattern Recognition (CVPR), 2012
+[1]&nbsp;&nbsp;&nbsp;Andreas Geiger, Philip Lenz, and Raquel Urtasun. Are we ready for Autonomous Driving? The KITTI Vision Benchmark Suite. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 2012
+
+[2]&nbsp;&nbsp;&nbsp;Andreas Geiger, Philip Lenz, Christoph Stiller, and Raquel Urtasun. Vision meets Robotics: The KITTI Dataset. International Journal of Robotics Research (IJRR), 2013
