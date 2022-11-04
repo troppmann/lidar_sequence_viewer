@@ -1,24 +1,15 @@
-use std::{fs::File, io::Read};
+use std::path::Path;
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use lidar_viewer::{byteorder_parser, Point};
+use lidar_viewer::io::read_frame;
 
-
-fn nope_parser(_: &[u8])->Vec<Point>{
-    Vec::new()
-}
 
 fn bench_parser(c: &mut Criterion) {
     //prepare
-    let path = "../SemanticKITTI/dataset/sequences/00/velodyne/000000.bin";
-    let mut f = File::open(path).unwrap();
-    let mut buffer = Vec::new();
-    f.read_to_end(&mut buffer).unwrap();
-
+    let path = Path::new("../SemanticKITTI/dataset/sequences/00/velodyne/000000.bin");
     //bench
     let mut group = c.benchmark_group("Parser");
-    group.bench_function("byteorder parser 000000bin", |b| b.iter(|| byteorder_parser(black_box(&buffer))));
-    group.bench_function("nom parser 000000bin", |b| b.iter(|| nope_parser(black_box(&buffer))));
+    group.bench_function("byteorder parser 000000bin", |b| b.iter(|| read_frame(black_box(path))));
     group.finish()
 }
 
