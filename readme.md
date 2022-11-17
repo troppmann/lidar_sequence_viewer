@@ -4,8 +4,9 @@ Renders the lidar data from the KITTI Benchmark[1,2].
 ## TODO
 - [x] Understand data
 - [x] Extract data in Rust
-- [ ] Extract data in Bevy
-- [ ] Render a frame
+- [x] Extract data in Bevy
+- [x] Render a frame
+- [ ] Shader Instancing
 - [ ] Load all frames into memory
 - [ ] Render all frames back to back
 - [ ] Render in realtime

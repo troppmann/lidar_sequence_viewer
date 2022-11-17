@@ -1,13 +1,11 @@
-use bevy::{input::mouse::MouseMotion, prelude::*, window::CursorGrabMode};
 use crate::math::smooth_damp;
-
+use bevy::{input::mouse::MouseMotion, prelude::*, window::CursorGrabMode};
 
 pub struct ObserverPlugin;
 
 impl Plugin for ObserverPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .insert_resource(ClearColor(Color::rgb(0.4, 0.4, 0.4)))
+        app.insert_resource(ClearColor(Color::rgb_u8(0, 41, 61)))
             .add_startup_system(setup_camera)
             .add_system(camera_control);
     }
@@ -17,15 +15,15 @@ fn setup_camera(mut commands: Commands) {
     let transform = Transform::from_xyz(5.0, 10.0, 10.0).looking_at(Vec3::ZERO, Vec3::Y);
     let (_, yaw, pitch) = transform.rotation.to_euler(EulerRot::ZYX);
     commands
-    .spawn(Camera3dBundle {
-        transform,
-        ..default()
-    })
-    .insert(CameraController {
-        pitch: DampedFloat::init(pitch),
-        yaw: DampedFloat::init(yaw),
-        ..default()
-    });
+        .spawn(Camera3dBundle {
+            transform,
+            ..default()
+        })
+        .insert(CameraController {
+            pitch: DampedFloat::init(pitch),
+            yaw: DampedFloat::init(yaw),
+            ..default()
+        });
 }
 
 #[derive(Component)]
@@ -74,13 +72,12 @@ impl Default for CameraController {
                 target: 0.0,
                 velocity: 0.0,
             },
-            smooth_time: 0.1,
+            smooth_time: 0.01,
             velocity: Vec3::ZERO,
             old_cursor_position: None,
         }
     }
 }
-
 
 struct DampedFloat {
     pub actual: f32,
@@ -105,9 +102,6 @@ impl DampedFloat {
         );
     }
 }
-
-
-
 
 fn camera_control(
     time: Res<Time>,
@@ -172,11 +166,9 @@ fn camera_control(
             + options.velocity.y * delta_time * Vec3::Y
             + options.velocity.z * delta_time * forward;
 
-
         let Some(window )= windows.get_primary_mut() else {
             return;
         };
-
         // Apply look update
         if btn.just_pressed(MouseButton::Right) {
             window.set_cursor_grab_mode(CursorGrabMode::Confined);

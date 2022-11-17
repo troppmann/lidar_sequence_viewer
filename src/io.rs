@@ -3,10 +3,10 @@ use nom::{IResult, multi::many0, sequence::tuple, number::complete::le_f32};
 
 #[derive(PartialEq, Debug)]
 pub struct Point{
-    x: f32,
-    y: f32,
-    z: f32,
-    remission: f32,
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
+    pub remission: f32,
 }
 
 #[derive(PartialEq, Debug)]

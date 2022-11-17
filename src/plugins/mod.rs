@@ -1,5 +1,7 @@
-pub mod observer;
-pub mod lidar;
+mod lidar;
+mod observer;
+mod fps;
 
-pub use observer::ObserverPlugin;
 pub use lidar::LidarPlugin;
+pub use observer::ObserverPlugin;
+pub use fps::FpsWindowTitlePlugin;
