@@ -18,3 +18,10 @@ fn match_to_vecs(){
     let matching = a.iter().zip(&b).filter(|&(a, b)| a == b).count();
     println!("{}", matching);
 }
+
+fn example_read_frame()-> Result<(), Box<dyn std::error::Error>> {
+    let path = Path::new("../SemanticKITTI/dataset/sequences/00/velodyne/000000.bin");
+    let frame = read_frame(path)?;
+    println!("{:?}", frame.0[0]);
+    Ok(())
+}
