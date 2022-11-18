@@ -11,9 +11,9 @@ fn main() {
     App::new()
         .add_startup_system(setup_window)
         .add_plugins(DefaultPlugins)
+        .add_plugin(FpsWindowTitlePlugin)
         .add_plugin(ObserverPlugin)
         .add_plugin(LidarPlugin)
-        .add_plugin(FpsWindowTitlePlugin)
         .run();
 }
 

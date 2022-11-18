@@ -7,9 +7,9 @@ Renders the lidar data from the KITTI Benchmark[1,2].
 - [x] Extract data in Bevy
 - [x] Render a frame
 - [x] Shader Instancing
-- [ ] Load all frames into memory
-- [ ] Render all frames back to back
-- [ ] Render in realtime
+- [x] Load all frames into memory
+- [x] Render all frames back to back
+- [x] Render in realtime
 - [ ] Create a videoplayer UI
 - [ ] Manipulate time with the UI
 - [ ] Render labeled information
