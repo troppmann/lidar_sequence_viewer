@@ -18,6 +18,6 @@ pub fn update_window_title(diagnostics: Res<Diagnostics>, mut windows: ResMut<Wi
         .get(FrameTimeDiagnosticsPlugin::FPS)
         .and_then(|fps| fps.average())
     {
-        window.set_title(format!("Lidar Viewer FPS {}", fps))
+        window.set_title(format!("Lidar Viewer FPS {:.2}", fps))
     }
 }

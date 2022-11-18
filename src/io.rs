@@ -1,11 +1,10 @@
 use std::{fs::{File}, io::Read, path::Path};
+use bevy::prelude::Vec3;
 use nom::{IResult, multi::many0, sequence::tuple, number::complete::le_f32};
 
 #[derive(PartialEq, Debug)]
 pub struct Point{
-    pub x: f32,
-    pub y: f32,
-    pub z: f32,
+    pub position: Vec3,
     pub remission: f32,
 }
 
@@ -25,6 +24,6 @@ fn parse_points(input: &[u8]) -> IResult<&[u8], Vec<Point>>{
 }
 
 fn read_point(input: &[u8]) -> IResult<&[u8], Point>{
-    let (input, (x,y,z,remission)) = tuple((le_f32,le_f32,le_f32,le_f32))(input)?;
-    Ok((input, Point{x,y,z,remission}))
+    let (input, (x,z,y,remission)) = tuple((le_f32,le_f32,le_f32,le_f32))(input)?;
+    Ok((input, Point{position:Vec3 {x, y, z},remission}))
 }
