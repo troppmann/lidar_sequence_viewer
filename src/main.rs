@@ -3,9 +3,7 @@ pub mod math;
 pub mod plugins;
 
 use bevy::prelude::*;
-use plugins::FpsWindowTitlePlugin;
-use plugins::LidarPlugin;
-use plugins::ObserverPlugin;
+use plugins::*;
 
 fn main() {
     App::new()
@@ -14,6 +12,7 @@ fn main() {
         .add_plugin(FpsWindowTitlePlugin)
         .add_plugin(ObserverPlugin)
         .add_plugin(LidarPlugin)
+        .add_plugin(UiPlugin)
         .run();
 }
 

@@ -9,6 +9,8 @@ edition = "2021"
 nom = "7.1.1"
 bevy = { version = "0.9.0", features = ["dynamic"] }
 bytemuck = "1.12.3"
+bevy_egui = "0.17.1"
+
 [dev-dependencies]
 criterion = "0.3"
 

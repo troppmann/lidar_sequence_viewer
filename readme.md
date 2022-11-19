@@ -10,7 +10,7 @@ Renders the lidar data from the KITTI Benchmark[1,2].
 - [x] Load all frames into memory
 - [x] Render all frames back to back
 - [x] Render in realtime
-- [ ] Create a videoplayer UI
+- [x] Create a videoplayer UI
 - [ ] Manipulate time with the UI
 - [ ] Render labeled information
 - [ ] Load files dynamically

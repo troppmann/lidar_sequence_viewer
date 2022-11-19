@@ -10,23 +10,25 @@ pub struct LidarPlugin;
 
 impl Plugin for LidarPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(PlayData::default())
+        app.insert_resource(PlayerState::default())
             .add_startup_system(init_sequence)
             .add_system(player)
             .add_plugin(InstancingPlugin);
     }
 }
 #[derive(Resource)]
-struct PlayData {
+pub struct PlayerState {
     counter: i64,
     start_time: f64,
-    sequence: Option<Sequence>,
+    pub sequence: Option<Sequence>,
     mesh: Option<Handle<Mesh>>,
-    actual_frame: usize,
+    pub actual_frame: usize,
     has_frame_changes: bool,
+    pub paused: bool,
 }
 
-impl Default for PlayData {
+
+impl Default for PlayerState {
     fn default() -> Self {
         Self {
             counter: 0,
@@ -35,11 +37,12 @@ impl Default for PlayData {
             mesh: None,
             actual_frame: 0,
             has_frame_changes: false,
+            paused: false,
         }
     }
 }
 
-impl PlayData {
+impl PlayerState {
     pub fn update(&mut self, time_in_seconds: f64){
 
         if let Some(sequence) = &self.sequence{
@@ -53,7 +56,7 @@ impl PlayData {
 
 
 fn init_sequence(
-    mut playdata: ResMut<PlayData>,
+    mut playdata: ResMut<PlayerState>,
     time: Res<Time>,
     mut meshes: ResMut<Assets<Mesh>>,
 ) {
@@ -85,18 +88,21 @@ fn spawn_frame(commands: &mut Commands, frame: &Frame, mesh: Handle<Mesh>) {
 fn player(
     mut commands: Commands,
     time: Res<Time>,
-    mut playdata: ResMut<PlayData>,
+    mut state: ResMut<PlayerState>,
     query: Query<Entity, With<InstanceMaterialData>>,
 ) {
-    playdata.counter += 1;
-    playdata.update(time.elapsed_seconds_f64());
-    if playdata.has_frame_changes {
+    state.counter += 1;
+    if state.paused{
+        return;
+    }
+    state.update(time.elapsed_seconds_f64());
+    if state.has_frame_changes {
         query.for_each(|entity| commands.entity(entity).despawn());
-        if let Some(sequence) = &playdata.sequence {
+        if let Some(sequence) = &state.sequence {
             spawn_frame(
                 &mut commands,
-                &sequence.frames[playdata.actual_frame],
-                playdata.mesh.as_ref().unwrap().clone(),
+                &sequence.frames[state.actual_frame],
+                state.mesh.as_ref().unwrap().clone(),
             )
         }
     }
