@@ -42,7 +42,6 @@ fn setup(mut egui_context: ResMut<EguiContext>,){
 fn control_bar(
     mut egui_context: ResMut<EguiContext>,
     mut player: ResMut<PlayerState>, 
-    time: Res<Time>, 
     mut windows: ResMut<Windows>,
     images: Local<UiHandles>,
 ) {
@@ -56,30 +55,28 @@ fn control_bar(
         false => images.fullscreen_enter_button.clone_weak(),
     });
     egui::TopBottomPanel::bottom("ControlBar").frame(frame).show(egui_context.ctx_mut(), |ui| {
-        let elapsed = time.elapsed_seconds_f64();
         ui.add_space(10.0);
+        let mut frame = player.get_frame();
         ui.horizontal(|ui| {
             ui.add_space(8.0);
             if ui.add(egui::ImageButton::new(play_button, Vec2::new(20.0, 20.0)).frame(false)).clicked() {
-                player.toggle_play(elapsed)
+                player.toggle_play();
             }
             let label_space = 85.0; 
             ui.spacing_mut().slider_width = ui.available_width() - label_space;
             let max_frame = player.sequence.as_ref().map_or(0, |s| s.frame_count - 1).max(0);
-            let slider_response = ui.add(egui::Slider::new(&mut player.actual_frame, 0..=max_frame).show_value(false));
+            let slider_response = ui.add(egui::Slider::new(&mut frame, 0..=max_frame).show_value(false));
             if slider_response.drag_started(){
-                player.drag_paused = true;
+                player.drag_start()
             }
             if slider_response.drag_released(){
-                player.drag_paused = false;
-                player.start_time = elapsed;
+                player.drag_end()
             }
             if slider_response.changed(){
-                let frame = player.actual_frame;
-                player.request_frame(frame, time.elapsed_seconds_f64());
+                player.request_frame(frame);
             }
             ui.add_sized(bevy_egui::egui::Vec2::new(40.0,20.0), 
-                        egui::Label::new(RichText::new(player.actual_frame.to_string()).color(Color32::WHITE).text_style(egui::TextStyle::Button)));
+                        egui::Label::new(RichText::new(frame.to_string()).color(Color32::WHITE).text_style(egui::TextStyle::Button)));
             if ui.add(egui::ImageButton::new(fullscreen_button, Vec2::new(20.0, 20.0)).frame(false)).clicked() {
                 player.fullscreen = !player.fullscreen;
                 let window = windows.primary_mut();

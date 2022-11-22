@@ -18,13 +18,13 @@ impl Plugin for LidarPlugin {
 }
 #[derive(Resource)]
 pub struct PlayerState {
-    pub start_time: f64,
+    start_time: Option<f64>,
     pub sequence: Option<Sequence>,
     mesh: Option<Handle<Mesh>>,
-    pub actual_frame: usize,
-    pub start_frame: usize,
+    actual_frame: usize,
+    start_frame: usize,
     last_rendered_frame: usize, 
-    pub drag_paused: bool,
+    drag_paused: bool,
     pub paused: bool,
     pub fullscreen: bool,
 }
@@ -33,7 +33,7 @@ pub struct PlayerState {
 impl Default for PlayerState {
     fn default() -> Self {
         Self {
-            start_time: 0.0,
+            start_time: None,
             sequence: None,
             mesh: None,
             actual_frame: 0,
@@ -47,32 +47,43 @@ impl Default for PlayerState {
 }
 
 impl PlayerState {
-    pub fn update(&mut self, time_in_seconds: f64){
+    fn update(&mut self, time_in_seconds: f64){
         if let Some(sequence) = &self.sequence{
-            let passed_time = time_in_seconds - self.start_time;
+            let passed_time = time_in_seconds - *self.start_time.get_or_insert(time_in_seconds);
             self.actual_frame = ((passed_time * 10.0) as usize + self.start_frame).min(sequence.frame_count - 1).max(0);
         }
     }
-    pub fn toggle_play(&mut self, time_in_seconds: f64){
+    pub fn get_frame(&self) -> usize {
+        self.actual_frame
+    }
+    pub fn toggle_play(&mut self){
         self.paused = !self.paused;
         self.start_frame = self.actual_frame;
-        self.start_time = time_in_seconds;
+        self.start_time = None;
     }
-    pub fn request_frame(&mut self, frame: usize, time_in_seconds: f64){
+    pub fn request_frame(&mut self, frame: usize){
         self.start_frame = frame;
-        self.start_time = time_in_seconds;
+        self.actual_frame = frame;
+        self.start_time = None;
     }
+    pub fn drag_start(&mut self){
+        self.drag_paused = true;
+    }
+    pub fn drag_end(&mut self){
+        self.drag_paused = false;
+        self.start_time = None;
+    }
+
 }
 
 
 fn init_sequence(
     mut state: ResMut<PlayerState>,
-    time: Res<Time>,
     mut meshes: ResMut<Assets<Mesh>>,
 ) {
     let path = Path::new("../SemanticKITTI/dataset/sequences/04/velodyne/");
     state.sequence = Some(read_sequence_from_dir(path).unwrap());
-    state.start_time = time.elapsed_seconds_f64();
+    state.start_time = None;
     state.start_frame = 0;
     state.mesh = Some(meshes.add(Mesh::from(shape::Cube { size: 0.04 })))
 }
