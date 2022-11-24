@@ -1,3 +1,3 @@
-mod plugin;
+mod lidar_plugin;
 mod instancing;
-pub use plugin::*;
+pub use lidar_plugin::*;

@@ -14,6 +14,7 @@ Renders the lidar data from the KITTI Benchmark[1,2].
 - [x] Manipulate time with the UI
 - [ ] KeyboardInput & UI Overhall
 - [ ] Render labeled information
+- [ ] PlaySpeed Manipulation
 - [ ] Load files dynamically
 - [ ] Change Sequences 
 - [ ] Pick Sequence UI

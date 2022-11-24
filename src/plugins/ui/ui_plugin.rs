@@ -1,7 +1,10 @@
 use bevy::prelude::*;
 use bevy_egui::{*, egui::{Vec2, Visuals, Color32, RichText}};
 
-use super::lidar::PlayerState;
+use crate::plugins::lidar::PlayerState;
+
+use super::video_slider::VideoSlider;
+
 
 pub struct UiPlugin;
 
@@ -72,7 +75,7 @@ fn control_bar(
             let label_space = 85.0; 
             ui.spacing_mut().slider_width = ui.available_width() - label_space;
             let max_frame = player.sequence.as_ref().map_or(0, |s| s.frame_count - 1).max(0);
-            let slider_response = ui.add(egui::Slider::new(&mut frame, 0..=max_frame).show_value(false));
+            let slider_response = ui.add(VideoSlider::new(&mut frame, 0..=max_frame).slider_color(Color32::from_rgb(250, 11, 11)).show_value(false));
             if slider_response.drag_started(){
                 state.paused_state_before_drag = player.is_paused();
                 state.dragging = true;
