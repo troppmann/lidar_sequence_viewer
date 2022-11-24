@@ -65,16 +65,12 @@ fn control_bar(
         false => images.fullscreen_enter_button.clone_weak(),
     });
     egui::TopBottomPanel::bottom("ControlBar").frame(frame).show(egui_context.ctx_mut(), |ui| {
-        ui.add_space(10.0);
         let mut frame = player.get_frame();
+        let max_frame = player.sequence.as_ref().map_or(0, |s| s.frame_count - 1).max(0);
         ui.horizontal(|ui| {
-            ui.add_space(8.0);
-            if ui.add(egui::ImageButton::new(play_button, Vec2::new(20.0, 20.0)).frame(false)).clicked() {
-                player.toggle_play();
-            }
-            let label_space = 85.0; 
-            ui.spacing_mut().slider_width = ui.available_width() - label_space;
-            let max_frame = player.sequence.as_ref().map_or(0, |s| s.frame_count - 1).max(0);
+            let padding = 10.0; 
+            ui.add_space(padding);
+            ui.spacing_mut().slider_width = ui.available_width() - padding;
             let slider_response = ui.add(VideoSlider::new(&mut frame, 0..=max_frame).slider_color(Color32::from_rgb(250, 11, 11)).show_value(false));
             if slider_response.drag_started(){
                 state.paused_state_before_drag = player.is_paused();
@@ -90,8 +86,16 @@ fn control_bar(
             if slider_response.changed(){
                 player.request_frame(frame);
             }
+        });
+        ui.horizontal(|ui| {
+            ui.add_space(15.0);
+            if ui.add(egui::ImageButton::new(play_button, Vec2::new(20.0, 20.0)).frame(false)).clicked() {
+                player.toggle_play();
+            }
             ui.add_sized(bevy_egui::egui::Vec2::new(40.0,20.0), 
-                        egui::Label::new(RichText::new(frame.to_string()).color(Color32::WHITE).text_style(egui::TextStyle::Button)));
+                        egui::Label::new(RichText::new(format!("{}-{}", frame, max_frame)).color(Color32::WHITE).text_style(egui::TextStyle::Button)));
+            let padding = 35.0;
+            ui.add_space(ui.available_width() - padding);
             if ui.add(egui::ImageButton::new(fullscreen_button, Vec2::new(20.0, 20.0)).frame(false)).clicked() {
                 state.fullscreen = !state.fullscreen;
                 let window = windows.primary_mut();
