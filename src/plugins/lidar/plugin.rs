@@ -24,9 +24,7 @@ pub struct PlayerState {
     actual_frame: usize,
     start_frame: usize,
     last_rendered_frame: usize, 
-    drag_paused: bool,
-    pub paused: bool,
-    pub fullscreen: bool,
+    paused: bool,
 }
 
 
@@ -39,9 +37,7 @@ impl Default for PlayerState {
             actual_frame: 0,
             start_frame: 0,
             last_rendered_frame: usize::MAX,
-            drag_paused: false,
             paused: true,
-            fullscreen: false,
         }
     }
 }
@@ -53,27 +49,30 @@ impl PlayerState {
             self.actual_frame = ((passed_time * 10.0) as usize + self.start_frame).min(sequence.frame_count - 1).max(0);
         }
     }
+    pub fn is_paused(&self)->bool{
+        self.paused
+    }
     pub fn get_frame(&self) -> usize {
         self.actual_frame
-    }
-    pub fn toggle_play(&mut self){
-        self.paused = !self.paused;
-        self.start_frame = self.actual_frame;
-        self.start_time = None;
     }
     pub fn request_frame(&mut self, frame: usize){
         self.start_frame = frame;
         self.actual_frame = frame;
         self.start_time = None;
     }
-    pub fn drag_start(&mut self){
-        self.drag_paused = true;
-    }
-    pub fn drag_end(&mut self){
-        self.drag_paused = false;
+    pub fn toggle_play(&mut self){
+        self.paused = !self.paused;
+        self.start_frame = self.actual_frame;
         self.start_time = None;
     }
-
+    pub fn play(&mut self){
+        self.paused = false;
+        self.start_frame = self.actual_frame;
+        self.start_time = None;
+    }
+    pub fn pause(&mut self){
+        self.paused = true;
+    }
 }
 
 
@@ -94,7 +93,7 @@ fn player(
     mut state: ResMut<PlayerState>,
     query: Query<Entity, With<InstanceMaterialData>>,
 ) {
-    if !state.paused && !state.drag_paused{
+    if !state.paused {
         state.update(time.elapsed_seconds_f64());
     }
     if state.last_rendered_frame != state.actual_frame {
@@ -120,7 +119,7 @@ fn spawn_frame(commands: &mut Commands, frame: &Frame, mesh: Handle<Mesh>) {
                     position: point.position,
                     scale: 1.0,
                     color: Color::rgb_u8(247, 127, 0).as_linear_rgba_f32(),
-                }).collect(),
+            }).collect(),
         ),
         NoFrustumCulling,
     ));

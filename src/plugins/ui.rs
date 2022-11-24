@@ -17,7 +17,12 @@ struct UiHandles{
     fullscreen_enter_button: Handle<Image>,
     fullscreen_exit_button: Handle<Image>,
 }
-
+#[derive(Default)]
+struct UiState{
+    paused_state_before_drag: bool,
+    dragging: bool,
+    fullscreen: bool,
+}
 
 impl FromWorld for UiHandles {
     fn from_world(world: &mut World) -> Self {
@@ -44,13 +49,15 @@ fn control_bar(
     mut player: ResMut<PlayerState>, 
     mut windows: ResMut<Windows>,
     images: Local<UiHandles>,
+    mut state: Local<UiState>,
 ) {
     let frame = egui::Frame {fill: Color32::from_rgba_premultiplied(10, 10, 10, 200), ..egui::Frame::default() };
-    let play_button = egui_context.add_image(match player.paused {
+    let show_play_button = state.dragging && state.paused_state_before_drag || !state.dragging && player.is_paused(); 
+    let play_button = egui_context.add_image(match show_play_button {
         true => images.play_button.clone_weak(),
         false => images.pause_button.clone_weak(),
     });
-    let fullscreen_button = egui_context.add_image(match player.fullscreen {
+    let fullscreen_button = egui_context.add_image(match state.fullscreen {
         true => images.fullscreen_exit_button.clone_weak(),
         false => images.fullscreen_enter_button.clone_weak(),
     });
@@ -67,10 +74,15 @@ fn control_bar(
             let max_frame = player.sequence.as_ref().map_or(0, |s| s.frame_count - 1).max(0);
             let slider_response = ui.add(egui::Slider::new(&mut frame, 0..=max_frame).show_value(false));
             if slider_response.drag_started(){
-                player.drag_start()
+                state.paused_state_before_drag = player.is_paused();
+                state.dragging = true;
+                player.pause()
             }
             if slider_response.drag_released(){
-                player.drag_end()
+                if !state.paused_state_before_drag {
+                    player.play();
+                }
+                state.dragging = false;
             }
             if slider_response.changed(){
                 player.request_frame(frame);
@@ -78,9 +90,9 @@ fn control_bar(
             ui.add_sized(bevy_egui::egui::Vec2::new(40.0,20.0), 
                         egui::Label::new(RichText::new(frame.to_string()).color(Color32::WHITE).text_style(egui::TextStyle::Button)));
             if ui.add(egui::ImageButton::new(fullscreen_button, Vec2::new(20.0, 20.0)).frame(false)).clicked() {
-                player.fullscreen = !player.fullscreen;
+                state.fullscreen = !state.fullscreen;
                 let window = windows.primary_mut();
-                window.set_mode(if player.fullscreen {WindowMode::BorderlessFullscreen} else {WindowMode::Windowed});
+                window.set_mode(if state.fullscreen {WindowMode::BorderlessFullscreen} else {WindowMode::Windowed});
             }
         });
         ui.add_space(5.0);
