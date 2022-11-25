@@ -2,7 +2,7 @@
 #![allow(dead_code)]
 
 use std::{f64::INFINITY, ops::RangeInclusive};
-use bevy_egui::egui::{Color32, SliderOrientation, emath::{self, *}, Ui, Response, Sense, Key, epaint, DragValue, TextStyle, RichText, Label, Widget, WidgetInfo, egui_assert};
+use bevy_egui::egui::{Color32, SliderOrientation, emath::{self, *}, Ui, Response, Sense, Key, epaint, DragValue, TextStyle, RichText, Label, Widget, WidgetInfo, egui_assert, FontId};
 
 // ----------------------------------------------------------------------------
 
@@ -414,6 +414,10 @@ impl<'a> VideoSlider<'a> {
                 fill: self.slider_color.unwrap_or(Color32::WHITE),
                 stroke: Default::default(),
             });
+            if response.dragged() {
+                let tooltip_rect = rail_rect;
+                ui.painter().text(Pos2::new(position_1d,tooltip_rect.top() - 20.0), Align2::CENTER_CENTER, value.to_string(), FontId::proportional(20.0), Color32::WHITE);
+            }
         }
     }
 

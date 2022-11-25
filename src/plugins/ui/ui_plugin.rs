@@ -93,7 +93,7 @@ fn control_bar(
                 player.toggle_play();
             }
             ui.add_sized(bevy_egui::egui::Vec2::new(40.0,20.0), 
-                        egui::Label::new(RichText::new(format!("{}-{}", frame, max_frame)).color(Color32::WHITE).text_style(egui::TextStyle::Button)));
+                        egui::Label::new(RichText::new(format!("{} / {}", frame, max_frame)).color(Color32::WHITE).text_style(egui::TextStyle::Button)));
             let padding = 35.0;
             ui.add_space(ui.available_width() - padding);
             if ui.add(egui::ImageButton::new(fullscreen_button, Vec2::new(20.0, 20.0)).frame(false)).clicked() {
