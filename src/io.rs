@@ -11,25 +11,35 @@ pub struct Point{
 #[derive(PartialEq, Debug)]
 pub struct Frame(pub Vec<Point>);
 
+#[derive(PartialEq, Clone, Copy)]
+pub enum LoadState{
+    NotRequested,
+    Requested,
+    Loaded,
+}
+
 pub struct Sequence {
-    pub frames: Vec<Frame>,
+    pub folder: String, 
+    pub frames: Vec<Option<Frame>>,
+    pub load_state: Vec<LoadState>,
     pub frame_count: usize,
 }
 
-impl Sequence{
-    pub fn new(frames: Vec<Frame>) -> Self{
-        let frame_count = frames.len(); 
-        Self { frames: frames, frame_count}
-    }
-}
 
-pub fn read_sequence_from_dir(path: &Path)-> Result<Sequence, Box<dyn std::error::Error>>{
-    let paths = fs::read_dir(path)?;
+
+pub fn read_sequence_from_dir(path: String)-> Result<Sequence, Box<dyn std::error::Error>>{
+    let paths = fs::read_dir(&path)?;
     let frame_files = paths.into_iter() .filter_map(|x| x.ok().map(|entry| entry.path())).filter(|path| match path.extension() {
         Some(x) => x == "bin",
         None => false,
     });
-    Ok(Sequence::new(frame_files.map(|path| read_frame(&path).unwrap()).collect()))
+    let frame_count = frame_files.count();
+    Ok(Sequence{
+        folder: path,
+        frame_count,
+        load_state: vec![LoadState::NotRequested; frame_count],
+        frames: std::iter::repeat_with(|| None).take(frame_count).collect(),
+    })
 }
 
 

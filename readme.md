@@ -15,10 +15,11 @@ Renders the lidar data from the KITTI Benchmark[1,2].
 - [ ] KeyboardInput & UI Overhall
 - [ ] Render labeled information
 - [ ] PlaySpeed Manipulation
-- [ ] Load files dynamically
+- [x] Load files dynamically
 - [ ] Change Sequences 
 - [ ] Pick Sequence UI
-
+- [ ] Make Buffering more reliable with dynamic window and a pause if not rendered
+- [ ] Limit Memory Consumption by discarding unneeded frames
 ## References
 [1]&nbsp;&nbsp;&nbsp;Andreas Geiger, Philip Lenz, and Raquel Urtasun. Are we ready for Autonomous Driving? The KITTI Vision Benchmark Suite. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 2012
 

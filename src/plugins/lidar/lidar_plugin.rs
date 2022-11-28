@@ -1,6 +1,7 @@
 use std::path::Path;
 
-use bevy::{prelude::*, render::view::NoFrustumCulling};
+use bevy::{prelude::*, render::view::NoFrustumCulling, tasks::{Task, IoTaskPool}};
+use futures_lite::future;
 
 use crate::io::*;
 
@@ -13,6 +14,8 @@ impl Plugin for LidarPlugin {
         app.insert_resource(PlayerState::default())
             .add_startup_system(init_sequence)
             .add_system(player)
+            .add_system(handle_read_frames_task)
+            .add_system(buffer_next_frames)
             .add_plugin(InstancingPlugin);
     }
 }
@@ -21,6 +24,7 @@ pub struct PlayerState {
     start_time: Option<f64>,
     pub sequence: Option<Sequence>,
     mesh: Option<Handle<Mesh>>,
+    is_loading: bool,
     actual_frame: usize,
     start_frame: usize,
     last_rendered_frame: usize, 
@@ -34,6 +38,7 @@ impl Default for PlayerState {
             start_time: None,
             sequence: None,
             mesh: None,
+            is_loading: false,
             actual_frame: 0,
             start_frame: 0,
             last_rendered_frame: usize::MAX,
@@ -75,12 +80,11 @@ impl PlayerState {
     }
 }
 
-
 fn init_sequence(
     mut state: ResMut<PlayerState>,
     mut meshes: ResMut<Assets<Mesh>>,
 ) {
-    let path = Path::new("../SemanticKITTI/dataset/sequences/04/velodyne/");
+    let path = String::from("../SemanticKITTI/dataset/sequences/00/velodyne/");
     state.sequence = Some(read_sequence_from_dir(path).unwrap());
     state.start_time = None;
     state.start_frame = 0;
@@ -97,18 +101,53 @@ fn player(
         state.update(time.elapsed_seconds_f64());
     }
     if state.last_rendered_frame != state.actual_frame {
-        query.for_each(|entity| commands.entity(entity).despawn());
         if let Some(sequence) = &state.sequence {
-            spawn_frame(
-                &mut commands,
-                &sequence.frames[state.actual_frame],
-                state.mesh.as_ref().unwrap().clone(),
-            )
+            if let Some(frame) = &sequence.frames[state.actual_frame] {
+                //change frame content
+                query.for_each(|entity| commands.entity(entity).despawn());
+                spawn_frame(
+                    &mut commands,
+                    frame,
+                    state.mesh.as_ref().unwrap().clone(),
+                );
+                state.last_rendered_frame = state.actual_frame;
+                state.is_loading = false;
+            } else {
+                state.is_loading = true;
+            }
         }
-        state.last_rendered_frame = state.actual_frame;
     }
     
 }
+
+#[derive(Component)]
+struct ReadFrameTask {
+    task: Task<Frame>,
+    frame_number: usize,
+}
+
+fn buffer_next_frames(mut commands: Commands, mut state: ResMut<PlayerState>){
+    let thread_pool = IoTaskPool::get();
+    let actual_frame = state.actual_frame;
+    if let Some(sequence) = &mut state.sequence{
+        sequence.load_state.iter_mut().enumerate()
+        .skip(actual_frame).take(30)
+        .for_each(|(iter, state)|{
+            if *state == LoadState::NotRequested {
+                let  path = format!("{}/{:0>6}.bin", sequence.folder, iter);
+                let task = thread_pool.spawn(async move {
+                    read_frame(Path::new(&path)).unwrap()
+                });
+                commands.spawn(ReadFrameTask{task, frame_number: iter});
+                *state = LoadState::Requested;
+            }
+        });
+
+    }
+}
+
+
+
 
 fn spawn_frame(commands: &mut Commands, frame: &Frame, mesh: Handle<Mesh>) {
     commands.spawn((
@@ -123,4 +162,27 @@ fn spawn_frame(commands: &mut Commands, frame: &Frame, mesh: Handle<Mesh>) {
         ),
         NoFrustumCulling,
     ));
+}
+
+
+fn handle_read_frames_task(mut commands:Commands, 
+                    mut read_frame_tasks: Query<(Entity, &mut ReadFrameTask)>,
+                    mut state: ResMut<PlayerState>){
+    for (entity, mut task) in &mut read_frame_tasks {
+        let max_frame = state.actual_frame + 30;
+        if !(state.actual_frame..max_frame).contains(&task.frame_number) {
+            commands.entity(entity).despawn();
+            if let Some(sequence) = &mut state.sequence {
+                sequence.load_state[task.frame_number] = LoadState::NotRequested;
+            }
+            continue;
+        }
+        if let Some(frame) = future::block_on(future::poll_once(&mut task.task)) {
+            if let Some(sequence) = &mut state.sequence {
+                sequence.frames[task.frame_number] = Some(frame);
+                sequence.load_state[task.frame_number] = LoadState::Loaded;
+            }
+            commands.entity(entity).despawn();
+        }
+    }
 }
