@@ -21,7 +21,7 @@ pub enum LoadState{
 pub struct Sequence {
     pub folder: String, 
     pub frames: Vec<Option<Frame>>,
-    pub load_state: Vec<LoadState>,
+    pub load_states: Vec<LoadState>,
     pub frame_count: usize,
 }
 
@@ -37,7 +37,7 @@ pub fn read_sequence_from_dir(path: String)-> Result<Sequence, Box<dyn std::erro
     Ok(Sequence{
         folder: path,
         frame_count,
-        load_state: vec![LoadState::NotRequested; frame_count],
+        load_states: vec![LoadState::NotRequested; frame_count],
         frames: std::iter::repeat_with(|| None).take(frame_count).collect(),
     })
 }

@@ -63,6 +63,7 @@ struct SliderSpec {
 #[must_use = "You should put this widget in an ui with `ui.add(widget);`"]
 pub struct VideoSlider<'a> {
     get_set_value: GetSetValue<'a>,
+    buffer_value: f64,
     range: RangeInclusive<f64>,
     spec: SliderSpec,
     clamp_to_range: bool,
@@ -74,6 +75,7 @@ pub struct VideoSlider<'a> {
     text: String,
     text_color: Option<Color32>,
     slider_color: Option<Color32>,
+    buffer_hint_color: Option<Color32>,
     /// Sets the minimal step of the widget value
     step: Option<f64>,
     min_decimals: usize,
@@ -101,9 +103,10 @@ impl<'a> VideoSlider<'a> {
 
     pub fn from_get_set(
         range: RangeInclusive<f64>,
-        get_set_value: impl 'a + FnMut(Option<f64>) -> f64,
+        mut get_set_value: impl 'a + FnMut(Option<f64>) -> f64,
     ) -> Self {
         Self {
+            buffer_value: get_set_value(None),
             get_set_value: Box::new(get_set_value),
             range,
             spec: SliderSpec {
@@ -120,6 +123,7 @@ impl<'a> VideoSlider<'a> {
             text: Default::default(),
             text_color: None,
             slider_color: None,
+            buffer_hint_color: None,
             step: None,
             min_decimals: 0,
             max_decimals: None,
@@ -161,6 +165,17 @@ impl<'a> VideoSlider<'a> {
         self.slider_color= Some(slider_color);
         self
     }
+
+    pub fn buffer_hint_color(mut self, buffer_hint_color: Color32) -> Self {
+        self.buffer_hint_color= Some(buffer_hint_color);
+        self
+    }
+
+    pub fn buffer_value<Num:emath::Numeric>(mut self, value: &Num)-> Self{
+        self.buffer_value = value.to_f64();
+        self
+    }
+
 
     /// Vertical or horizontal slider? The default is horizontal.
     pub fn orientation(mut self, orientation: SliderOrientation) -> Self {
@@ -400,11 +415,19 @@ impl<'a> VideoSlider<'a> {
 
             let rail_rect = self.rail_rect(rect, 4.0);
 
-            let position_1d = self.position_from_value(value, position_range);
+            let position_1d = self.position_from_value(value, position_range.clone());
             ui.painter().add(epaint::RectShape {
                 rect: rail_rect,
                 rounding: ui.visuals().widgets.inactive.rounding,
                 fill: ui.visuals().widgets.inactive.bg_fill,
+                stroke: Default::default(),
+            });
+            let position_buffer = self.position_from_value(self.buffer_value, position_range.clone());
+            let buffer_rect = self.slider_rect(position_buffer, &rail_rect);
+            ui.painter().add(epaint::RectShape {
+                rect: buffer_rect,
+                rounding: ui.visuals().widgets.inactive.rounding,
+                fill: self.buffer_hint_color.unwrap_or(Color32::WHITE),
                 stroke: Default::default(),
             });
             let slider_rect = self.slider_rect(position_1d, &rail_rect);

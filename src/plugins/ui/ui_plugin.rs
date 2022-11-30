@@ -66,12 +66,16 @@ fn control_bar(
     });
     egui::TopBottomPanel::bottom("ControlBar").frame(frame).show(egui_context.ctx_mut(), |ui| {
         let mut frame = player.get_frame();
-        let max_frame = player.sequence.as_ref().map_or(0, |s| s.frame_count - 1).max(0);
+        let max_frame = player.get_max_frame();
         ui.horizontal(|ui| {
             let padding = 10.0; 
             ui.add_space(padding);
             ui.spacing_mut().slider_width = ui.available_width() - padding;
-            let slider_response = ui.add(VideoSlider::new(&mut frame, 0..=max_frame).slider_color(Color32::from_rgb(250, 11, 11)).show_value(false));
+            let slider_response = ui.add(VideoSlider::new(&mut frame, 0..=max_frame)
+                .buffer_value(&player.get_buffer_frame())
+                .buffer_hint_color(Color32::from_rgb(111, 111, 111))
+                .slider_color(Color32::from_rgb(250, 11, 11))
+                .show_value(false));
             if slider_response.drag_started(){
                 state.paused_state_before_drag = player.is_paused();
                 state.dragging = true;
