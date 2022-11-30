@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{path::Path};
 
 use bevy::{prelude::*, render::view::NoFrustumCulling, tasks::{Task, IoTaskPool}};
 use futures_lite::future;
@@ -26,6 +26,7 @@ pub struct PlayerState {
     mesh: Option<Handle<Mesh>>,
     is_loading: bool,
     actual_frame: usize,
+    unloaded_frame: usize,
     start_frame: usize,
     last_rendered_frame: usize, 
     paused: bool,
@@ -41,6 +42,7 @@ impl Default for PlayerState {
             is_loading: false,
             actual_frame: 0,
             start_frame: 0,
+            unloaded_frame: 0,
             last_rendered_frame: usize::MAX,
             paused: true,
         }
@@ -63,6 +65,7 @@ impl PlayerState {
     pub fn request_frame(&mut self, frame: usize){
         self.start_frame = frame;
         self.actual_frame = frame;
+        self.unloaded_frame = frame;
         self.start_time = None;
     }
     pub fn toggle_play(&mut self){
@@ -128,10 +131,20 @@ struct ReadFrameTask {
 
 fn buffer_next_frames(mut commands: Commands, mut state: ResMut<PlayerState>){
     let thread_pool = IoTaskPool::get();
-    let actual_frame = state.actual_frame;
+    let mut unloaded_frame = state.unloaded_frame;
+    let max_buffer_range = 300;
+    if unloaded_frame > state.actual_frame + max_buffer_range {
+        return;
+    }
     if let Some(sequence) = &mut state.sequence{
-        sequence.load_state.iter_mut().enumerate()
-        .skip(actual_frame).take(30)
+        sequence.load_state.iter_mut().enumerate().skip(unloaded_frame)
+        .skip_while(|(iter, state)| {
+            let skip = **state == LoadState::Loaded;
+            if skip {
+               unloaded_frame = *iter;
+            } 
+            skip
+            }).take(5)
         .for_each(|(iter, state)|{
             if *state == LoadState::NotRequested {
                 let  path = format!("{}/{:0>6}.bin", sequence.folder, iter);
@@ -142,7 +155,7 @@ fn buffer_next_frames(mut commands: Commands, mut state: ResMut<PlayerState>){
                 *state = LoadState::Requested;
             }
         });
-
+        state.unloaded_frame = unloaded_frame;
     }
 }
 
@@ -169,14 +182,6 @@ fn handle_read_frames_task(mut commands:Commands,
                     mut read_frame_tasks: Query<(Entity, &mut ReadFrameTask)>,
                     mut state: ResMut<PlayerState>){
     for (entity, mut task) in &mut read_frame_tasks {
-        let max_frame = state.actual_frame + 30;
-        if !(state.actual_frame..max_frame).contains(&task.frame_number) {
-            commands.entity(entity).despawn();
-            if let Some(sequence) = &mut state.sequence {
-                sequence.load_state[task.frame_number] = LoadState::NotRequested;
-            }
-            continue;
-        }
         if let Some(frame) = future::block_on(future::poll_once(&mut task.task)) {
             if let Some(sequence) = &mut state.sequence {
                 sequence.frames[task.frame_number] = Some(frame);
