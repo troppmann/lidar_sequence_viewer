@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_egui::{*, egui::{Vec2, Visuals, Color32, RichText}};
+use bevy_egui::{*, egui::{Vec2, Visuals, Color32, RichText, Key}};
 
 use crate::plugins::lidar::PlayerState;
 
@@ -45,7 +45,6 @@ fn setup(mut egui_context: ResMut<EguiContext>,){
         ..default()
     });
 }
-
 
 fn control_bar(
     mut egui_context: ResMut<EguiContext>,
@@ -93,14 +92,16 @@ fn control_bar(
         });
         ui.horizontal(|ui| {
             ui.add_space(15.0);
-            if ui.add(egui::ImageButton::new(play_button, Vec2::new(20.0, 20.0)).frame(false)).clicked() {
+            if ui.add(egui::ImageButton::new(play_button, Vec2::new(20.0, 20.0)).frame(false)).clicked() ||
+                ui.input().key_pressed(Key::Space) {
                 player.toggle_play();
             }
             ui.add_sized(bevy_egui::egui::Vec2::new(40.0,20.0), 
                         egui::Label::new(RichText::new(format!("{} / {}", frame, max_frame)).color(Color32::WHITE).text_style(egui::TextStyle::Button)));
             let padding = 35.0;
             ui.add_space(ui.available_width() - padding);
-            if ui.add(egui::ImageButton::new(fullscreen_button, Vec2::new(20.0, 20.0)).frame(false)).clicked() {
+            if ui.add(egui::ImageButton::new(fullscreen_button, Vec2::new(20.0, 20.0)).frame(false)).clicked() ||
+                ui.input().key_pressed(Key::F) {
                 state.fullscreen = !state.fullscreen;
                 let window = windows.primary_mut();
                 window.set_mode(if state.fullscreen {WindowMode::BorderlessFullscreen} else {WindowMode::Windowed});

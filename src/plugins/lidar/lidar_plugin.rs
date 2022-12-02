@@ -158,7 +158,6 @@ fn player(
                 spawn_frame(&mut commands, frame, state.mesh.as_ref().unwrap().clone());
                 state.last_rendered_frame = state.actual_frame;
             } else {
-                println!("State not loaded {} {}", state.actual_frame, state.last_rendered_frame);
                 state.wait_for_buffering = true;
                 state.start_time = None;
             }

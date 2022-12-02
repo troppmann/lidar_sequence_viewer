@@ -374,43 +374,6 @@ impl<'a> VideoSlider<'a> {
             self.set_value(new_value);
         }
 
-        if response.has_focus() {
-            let (dec_key, inc_key) = match self.orientation {
-                SliderOrientation::Horizontal => (Key::ArrowLeft, Key::ArrowRight),
-                // Note that this is for moving the slider position,
-                // so up = decrement y coordinate:
-                SliderOrientation::Vertical => (Key::ArrowUp, Key::ArrowDown),
-            };
-
-            let decrement = ui.input().num_presses(dec_key);
-            let increment = ui.input().num_presses(inc_key);
-            let kb_step = increment as f32 - decrement as f32;
-
-            if kb_step != 0.0 {
-                let prev_value = self.get_value();
-                let prev_position = self.position_from_value(prev_value, position_range.clone());
-                let new_position = prev_position + kb_step;
-                let new_value = match self.step {
-                    Some(step) => prev_value + (kb_step as f64 * step),
-                    None if self.smart_aim => {
-                        let aim_radius = ui.input().aim_radius();
-                        emath::smart_aim::best_in_range_f64(
-                            self.value_from_position(
-                                new_position - aim_radius,
-                                position_range.clone(),
-                            ),
-                            self.value_from_position(
-                                new_position + aim_radius,
-                                position_range.clone(),
-                            ),
-                        )
-                    }
-                    _ => self.value_from_position(new_position, position_range.clone()),
-                };
-                self.set_value(new_value);
-            }
-        }
-
         // Paint it:
         if ui.is_rect_visible(response.rect) {
             let value = self.get_value();
