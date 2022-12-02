@@ -1,6 +1,8 @@
 #![allow(clippy::needless_pass_by_value)] // False positives with `impl ToString`
 #![allow(dead_code)]
 
+// Modified Slider from egui
+
 use std::{f64::INFINITY, ops::RangeInclusive};
 use bevy_egui::egui::{Color32, SliderOrientation, emath::{self, *}, Ui, Response, Sense, Key, epaint, DragValue, TextStyle, RichText, Label, Widget, WidgetInfo, egui_assert, FontId};
 
