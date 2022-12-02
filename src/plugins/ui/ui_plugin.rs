@@ -19,6 +19,8 @@ struct UiHandles{
     pause_button: Handle<Image>,
     fullscreen_enter_button: Handle<Image>,
     fullscreen_exit_button: Handle<Image>,
+    next_frame_button: Handle<Image>,
+    previous_frame_button: Handle<Image>,
 }
 #[derive(Default)]
 struct UiState{
@@ -35,6 +37,8 @@ impl FromWorld for UiHandles {
             pause_button: asset_server.load("ui/textures/pause.png"),
             fullscreen_enter_button: asset_server.load("ui/textures/fullscreen_enter.png"),
             fullscreen_exit_button: asset_server.load("ui/textures/fullscreen_exit.png"),
+            next_frame_button: asset_server.load("ui/textures/next_frame.png"),
+            previous_frame_button: asset_server.load("ui/textures/previous_frame.png"),
         }
     }
 }
@@ -63,6 +67,8 @@ fn control_bar(
         true => images.fullscreen_exit_button.clone_weak(),
         false => images.fullscreen_enter_button.clone_weak(),
     });
+    let next_frame_button = egui_context.add_image(images.next_frame_button.clone_weak());
+    let previous_frame_button = egui_context.add_image(images.previous_frame_button.clone_weak());
     egui::TopBottomPanel::bottom("ControlBar").frame(frame).show(egui_context.ctx_mut(), |ui| {
         let mut frame = player.get_frame();
         let max_frame = player.get_max_frame();
@@ -92,12 +98,18 @@ fn control_bar(
         });
         ui.horizontal(|ui| {
             ui.add_space(15.0);
+            if ui.add(egui::ImageButton::new(previous_frame_button, Vec2::new(20.0, 20.0)).frame(false)).clicked() || ui.input().key_pressed(Key::ArrowLeft) {
+                player.request_frame(frame.saturating_sub(1));
+            }
             if ui.add(egui::ImageButton::new(play_button, Vec2::new(20.0, 20.0)).frame(false)).clicked() ||
-                ui.input().key_pressed(Key::Space) {
+            ui.input().key_pressed(Key::Space) {
                 player.toggle_play();
             }
+            if ui.add(egui::ImageButton::new(next_frame_button, Vec2::new(20.0, 20.0)).frame(false)).clicked() || ui.input().key_pressed(Key::ArrowRight){
+                player.request_frame(frame + 1);
+            }
             ui.add_sized(bevy_egui::egui::Vec2::new(40.0,20.0), 
-                        egui::Label::new(RichText::new(format!("{} / {}", frame, max_frame)).color(Color32::WHITE).text_style(egui::TextStyle::Button)));
+            egui::Label::new(RichText::new(format!("{} / {}", frame, max_frame)).color(Color32::WHITE).text_style(egui::TextStyle::Button)));
             let padding = 35.0;
             ui.add_space(ui.available_width() - padding);
             if ui.add(egui::ImageButton::new(fullscreen_button, Vec2::new(20.0, 20.0)).frame(false)).clicked() ||

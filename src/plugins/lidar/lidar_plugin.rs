@@ -61,6 +61,7 @@ impl PlayerState {
     const MAX_BUFFER_RANGE: usize = 300;
     const BUFFER_SLIDING_WINDOW: usize = 5;
     const MEMORY_RANGE: usize = 500;
+    const SENSOR_FRAMES_PER_SECONDS: f64 = 10.0;
     pub fn is_paused(&self) -> bool {
         self.paused
     }
@@ -103,7 +104,7 @@ impl PlayerState {
     }
     fn update(&mut self, time_in_seconds: f64) {
         let passed_time = time_in_seconds - *self.start_time.get_or_insert(time_in_seconds);
-        self.actual_frame = ((passed_time * 10.0) as usize + self.start_frame)
+        self.actual_frame = ((passed_time * PlayerState::SENSOR_FRAMES_PER_SECONDS) as usize + self.start_frame)
             .min(self.max_frame)
             .max(0);
     }
