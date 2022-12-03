@@ -1,5 +1,3 @@
-use std::path::Path;
-
 use bevy::{
     prelude::*,
     render::view::NoFrustumCulling,
@@ -79,7 +77,9 @@ impl PlayerState {
         self.sequence = Some(sequence);
         self.start_frame = 0;
         self.actual_frame = 0;
+        self.last_rendered_frame = usize::MAX;
         self.buffer_frame = 0;
+        self.paused = true;
     }
     pub fn request_frame(&mut self, frame: usize) {
         self.has_frame_request = true;
@@ -133,7 +133,7 @@ impl PlayerState {
 }
 
 fn init_sequence(mut state: ResMut<PlayerState>, mut meshes: ResMut<Assets<Mesh>>) {
-    let path = String::from("../SemanticKITTI/dataset/sequences/00/velodyne/");
+    let path = "../SemanticKITTI/dataset/sequences/00/velodyne/".into();
     let sequence = read_sequence_from_dir(path).unwrap();
     state.set_sequence(sequence);
     state.mesh = Some(meshes.add(Mesh::from(shape::Cube { size: 0.04 })))
@@ -193,9 +193,9 @@ fn buffer_next_frames(mut commands: Commands, mut state: ResMut<PlayerState>) {
             .take(PlayerState::BUFFER_SLIDING_WINDOW)
             .for_each(|(iter, state)| {
                 if *state == LoadState::NotRequested {
-                    let path = format!("{}/{:0>6}.bin", sequence.folder, iter);
+                    let path = sequence.folder.join(format!("{:0>6}.bin", iter));
                     let task =
-                        thread_pool.spawn(async move { read_frame(Path::new(&path)).unwrap() });
+                        thread_pool.spawn(async move { read_frame(&path).unwrap() });
                     commands.spawn(ReadFrameTask {
                         task,
                         frame_number: iter,

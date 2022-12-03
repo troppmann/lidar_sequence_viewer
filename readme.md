@@ -17,7 +17,7 @@ Renders the lidar data from the KITTI Benchmark[1,2].
 - [ ] ToolTips
 - [ ] PlaySpeed Manipulation
 - [x] Load files dynamically
-- [ ] Change Sequences 
+- [x] Change Sequences 
 - [x] Pick Sequence UI
 - [x] Limit Memory Consumption
 ## References

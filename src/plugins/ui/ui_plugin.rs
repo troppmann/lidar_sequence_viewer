@@ -3,7 +3,7 @@ use bevy_egui::{*, egui::{Vec2, Visuals, Color32, RichText, Key, style::Margin, 
 use futures_lite::future;
 use rfd::{AsyncFileDialog, FileHandle};
 
-use crate::plugins::lidar::PlayerState;
+use crate::{plugins::lidar::PlayerState, io};
 
 use super::video_slider::VideoSlider;
 
@@ -88,18 +88,16 @@ fn menu_bar(
     let folder_button = egui_context.add_image(images.folder_button.clone_weak());
     egui::TopBottomPanel::top("menu bar").frame(frame).show(egui_context.ctx_mut(), |ui|{
         if ui.add_enabled(!state.opened_folder_dialog, egui::ImageButton::new(folder_button, Vec2::new(30.0, 30.0))).clicked() ||
-        ui.input().key_pressed(Key::O) {
-            if !state.opened_folder_dialog {
-                let task_pool = IoTaskPool::get();
-                let task = task_pool.spawn(async move {
-                    AsyncFileDialog::new()
-                            .set_directory("/")
-                            .pick_folder()
-                            .await
-                });
-                commands.spawn(LoadFolderTask(task));
-                state.opened_folder_dialog = true;
-            }
+            ui.input().key_pressed(Key::O) && !state.opened_folder_dialog {
+            let task_pool = IoTaskPool::get();
+            let task = task_pool.spawn(async move {
+                AsyncFileDialog::new()
+                        .set_directory("/")
+                        .pick_folder()
+                        .await
+            });
+            commands.spawn(LoadFolderTask(task));
+            state.opened_folder_dialog = true;
         }
     });
 }
@@ -114,6 +112,10 @@ fn handle_load_folder_task(
         if let Some(folder_task) = future::block_on(future::poll_once(&mut task.0)) {
             if let Some(folder) = folder_task{
                 println!("Folder{:?}", folder.path());
+                match io::read_sequence_from_dir(folder.path().into()) {
+                    Ok(sequence) => player_state.set_sequence(sequence),
+                    Err(e) => println!("{}", e),
+                }
             }
             menu_state.opened_folder_dialog = false;
             commands.entity(entity).despawn();

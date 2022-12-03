@@ -1,4 +1,4 @@
-use std::{fs::{File, self}, io::Read, path::Path};
+use std::{fs::{File, self}, io::Read, path::{Path, PathBuf}};
 use bevy::prelude::Vec3;
 use nom::{IResult, multi::many0, sequence::tuple, number::complete::le_f32};
 
@@ -19,7 +19,7 @@ pub enum LoadState{
 }
 
 pub struct Sequence {
-    pub folder: String, 
+    pub folder: PathBuf, 
     pub frames: Vec<Option<Frame>>,
     pub load_states: Vec<LoadState>,
     pub frame_count: usize,
@@ -27,8 +27,9 @@ pub struct Sequence {
 
 
 
-pub fn read_sequence_from_dir(path: String)-> Result<Sequence, Box<dyn std::error::Error>>{
+pub fn read_sequence_from_dir(path: PathBuf)-> Result<Sequence, Box<dyn std::error::Error>>{
     let paths = fs::read_dir(&path)?;
+    //TODO check if have such files 
     let frame_files = paths.into_iter() .filter_map(|x| x.ok().map(|entry| entry.path())).filter(|path| match path.extension() {
         Some(x) => x == "bin",
         None => false,
