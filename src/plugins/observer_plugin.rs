@@ -17,6 +17,10 @@ fn setup_camera(mut commands: Commands) {
     commands
         .spawn(Camera3dBundle {
             transform,
+            projection: Projection::Perspective(PerspectiveProjection {
+                fov: (90.0/360.0) * std::f32::consts::PI * 2.0,
+                ..default()
+            }),
             ..default()
         })
         .insert(CameraController {
