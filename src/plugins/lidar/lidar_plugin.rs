@@ -133,10 +133,11 @@ impl PlayerState {
 }
 
 fn init_sequence(mut state: ResMut<PlayerState>, mut meshes: ResMut<Assets<Mesh>>) {
-    let path = "../SemanticKITTI/dataset/sequences/00/velodyne/".into();
-    let sequence = read_sequence_from_dir(path).unwrap();
-    state.set_sequence(sequence);
-    state.mesh = Some(meshes.add(Mesh::from(shape::Cube { size: 0.04 })))
+    state.mesh = Some(meshes.add(Mesh::from(shape::Cube { size: 0.04 })));
+    let path = "../SemanticKITTI/dataset/sequences/00/".into();
+    if let Ok(sequence) = read_sequence_from_dir(path) {
+        state.set_sequence(sequence);
+    }    
 }
 
 fn player(
@@ -193,9 +194,13 @@ fn buffer_next_frames(mut commands: Commands, mut state: ResMut<PlayerState>) {
             .take(PlayerState::BUFFER_SLIDING_WINDOW)
             .for_each(|(iter, state)| {
                 if *state == LoadState::NotRequested {
-                    let path = sequence.folder.join(format!("{:0>6}.bin", iter));
+                    let path = sequence.point_folder.join(format!("{:0>6}.bin", iter));
+                    let label_path = sequence.label_folder.as_ref()
+                        .map(|path| path.join(format!("{:0>6}.label", iter)));
                     let task =
-                        thread_pool.spawn(async move { read_frame(&path).unwrap() });
+                        thread_pool.spawn(async move { read_frame(path, label_path).map_err(|err| {
+                            println!("{err}");
+                        }).unwrap() });
                     commands.spawn(ReadFrameTask {
                         task,
                         frame_number: iter,
@@ -236,16 +241,70 @@ fn spawn_frame(commands: &mut Commands, frame: &Frame, mesh: Handle<Mesh>) {
         mesh,
         SpatialBundle::VISIBLE_IDENTITY,
         InstanceMaterialData(
-            frame
-                .0
-                .iter()
+            if frame.labels.is_some(){
+                frame.points.iter()
+                .zip(frame.labels.as_ref().unwrap().iter())
+                .map(|(point, label)| InstanceData {
+                    position: point.position,
+                    scale: 1.0,
+                    color: label_to_color(label),
+                })
+                .collect()
+            }else {
+                let default_color = Color::rgb_u8(247, 127, 0).as_linear_rgba_f32();
+                frame.points.iter()
                 .map(|point| InstanceData {
                     position: point.position,
                     scale: 1.0,
-                    color: Color::rgb_u8(247, 127, 0).as_linear_rgba_f32(),
+                    color: default_color,
                 })
-                .collect(),
+                .collect()
+            }
         ),
         NoFrustumCulling,
     ));
+}
+
+pub fn label_to_color(label: &Label) -> [f32; 4]{
+    /*
+        0 : "unlabeled"
+        1 : "outlier"
+        10: "car"
+        11: "bicycle"
+        13: "bus"
+        15: "motorcycle"
+        16: "on-rails"
+        18: "truck"
+        20: "other-vehicle"
+        30: "person"
+        31: "bicyclist"
+        32: "motorcyclist"
+        40: "road"
+        44: "parking"
+        48: "sidewalk"
+        49: "other-ground"
+        50: "building"
+        51: "fence"
+        52: "other-structure"
+        60: "lane-marking"
+        70: "vegetation"
+        71: "trunk"
+        72: "terrain"
+        80: "pole"
+        81: "traffic-sign"
+        99: "other-object"
+        252: "moving-car"
+        253: "moving-bicyclist"
+        254: "moving-person"
+        255: "moving-motorcyclist"
+        256: "moving-on-rails"
+        257: "moving-bus"
+        258: "moving-truck"
+        259: "moving-other-vehicle"
+    */
+    match label.label {
+        10 => Color ::rgb_u8(10, 10, 200).as_linear_rgba_f32(),
+        252 => Color ::rgb_u8(10, 10, 200).as_linear_rgba_f32(),
+        _ =>  Color::rgb_u8(111, 200, 40).as_linear_rgba_f32(), 
+    }
 }
