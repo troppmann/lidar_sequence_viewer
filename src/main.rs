@@ -20,4 +20,6 @@ fn setup_window(mut windows: ResMut<Windows>){
     let window = windows.primary_mut();
     window.set_title("Lidar Viewer".to_string());
     window.center_window(MonitorSelection::Current);
+    window.set_decorations(false);
 }
+

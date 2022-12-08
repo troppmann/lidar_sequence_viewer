@@ -1,5 +1,5 @@
-use bevy::{prelude::*, tasks::{IoTaskPool, Task}};
-use bevy_egui::{*, egui::{Vec2, Visuals, Color32, RichText, Key, style::Margin, Stroke}};
+use bevy::{prelude::*, tasks::{IoTaskPool, Task}, app::AppExit};
+use bevy_egui::{*, egui::{Vec2, Visuals, Color32, RichText, Key, style::Margin, Stroke, FontId}};
 use futures_lite::future;
 use rfd::{AsyncFileDialog, FileHandle};
 
@@ -16,11 +16,14 @@ impl Plugin for UiPlugin {
             .add_plugin(EguiPlugin)
             .add_startup_system(setup)
             .insert_resource(MenuState::default())
+            .init_resource::<UiHandles>()
             .add_system(control_bar)
-            .add_system(handle_load_folder_task)
-            .add_system(menu_bar);
+            .add_system(menu)
+            .add_system(hover_bar.after(control_bar).after(menu))
+            .add_system(handle_load_folder_task);
     }
 }
+#[derive(Resource)]
 struct UiHandles{
     play_button: Handle<Image>,
     pause_button: Handle<Image>,
@@ -67,7 +70,51 @@ pub struct MenuState{
     opened_folder_dialog: bool,
 }
 
-fn menu_bar(
+#[inline]
+fn heading2() -> egui::TextStyle {
+    egui::TextStyle::Name("Heading2".into())
+}
+
+
+fn menu(
+    mut egui_context: ResMut<EguiContext>,
+    images: Res<UiHandles>,
+    mut exit: EventWriter<AppExit>,
+){
+    let menu_color = Color32::from_rgb(50,50,50);
+    let menu_hover = Color32::from_rgb(65,65,65);
+    let frame = egui::Frame::default().fill(menu_color).inner_margin(Margin::symmetric(3.0, 3.0));//.stroke(Stroke::none());
+    let folder_button = egui_context.add_image(images.folder_button.clone_weak());
+    let ctx = egui_context.ctx_mut();
+    let mut style: egui::Style = (*ctx.style()).clone();
+    style.text_styles.insert(heading2(), FontId::new(18.0, egui::FontFamily::Proportional));
+    style.visuals.button_frame = true;
+    style.visuals.widgets.inactive.bg_fill = menu_color;    
+    style.visuals.widgets.hovered.bg_fill = menu_hover;    
+    style.visuals.widgets.active.bg_fill = menu_hover;    
+    style.visuals.widgets.active.bg_stroke = Stroke::none();
+    style.visuals.widgets.hovered.bg_stroke = Stroke::none();    
+    ctx.set_style(style);
+    egui::TopBottomPanel::top("menu").frame(frame).show(ctx, |ui| {
+        ui.horizontal(|ui| {
+            ui.menu_button(RichText::new("File").text_style(heading2()), |ui| {
+                if ui.add(egui::Button::image_and_text(folder_button, Vec2::splat(20.0), RichText::new("Sequence Folder"))).clicked() {
+                    println!("clicked");
+                }
+            });
+            ui.menu_button(RichText::new("View").text_style(heading2()), |ui|{
+                
+            });
+            ui.add_space(ui.available_width()-30.0);
+            if ui.button("Close").clicked() {
+                exit.send(AppExit);
+            }
+        });
+    });
+}
+
+
+fn hover_bar(
     mut egui_context: ResMut<EguiContext>,
     images: Local<UiHandles>,
     mut commands: Commands,
@@ -84,9 +131,9 @@ fn menu_bar(
     style.visuals.widgets.hovered.bg_stroke = stroke;    
 
     ctx.set_style(style);
-    let frame = egui::Frame {fill: Color32::TRANSPARENT, inner_margin: Margin::same(10.0), ..egui::Frame::default() };
+    let frame = egui::Frame::default().fill(Color32::TRANSPARENT).inner_margin(Margin::same(10.0));
     let folder_button = egui_context.add_image(images.folder_button.clone_weak());
-    egui::TopBottomPanel::top("menu bar").frame(frame).show(egui_context.ctx_mut(), |ui|{
+    egui::SidePanel::left("hover bar").frame(frame).resizable(false).show(egui_context.ctx_mut(), |ui|{
         if ui.add_enabled(!state.opened_folder_dialog, egui::ImageButton::new(folder_button, Vec2::new(30.0, 30.0))).clicked() ||
             ui.input().key_pressed(Key::O) && !state.opened_folder_dialog {
             let task_pool = IoTaskPool::get();
@@ -127,10 +174,10 @@ fn control_bar(
     mut egui_context: ResMut<EguiContext>,
     mut player: ResMut<PlayerState>, 
     mut windows: ResMut<Windows>,
-    images: Local<UiHandles>,
+    images: Res<UiHandles>,
     mut state: Local<ControlBarState>,
 ) {
-    let frame = egui::Frame {fill: Color32::from_rgba_premultiplied(10, 10, 10, 200), ..egui::Frame::default() };
+    let frame = egui::Frame::default().fill(Color32::from_rgba_premultiplied(10, 10, 10, 200));
     let show_play_button = state.dragging && state.paused_state_before_drag || !state.dragging && player.is_paused(); 
     let play_button = egui_context.add_image(match show_play_button {
         true => images.play_button.clone_weak(),
