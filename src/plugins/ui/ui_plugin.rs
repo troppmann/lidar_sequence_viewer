@@ -112,8 +112,6 @@ fn handle_load_folder_task(
     for (entity, mut task) in &mut read_frame_tasks {
         if let Some(folder_task) = future::block_on(future::poll_once(&mut task.0)) {
             if let Some(folder) = folder_task{
-                println!("Folder{:?}", folder.path());
-                //TODO: Discard old frames that are currently loading
                 match io::read_sequence_from_dir(folder.path().into()) {
                     Ok(sequence) => player_state.set_sequence(sequence),
                     Err(e) => println!("{}", e),

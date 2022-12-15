@@ -17,14 +17,6 @@ rfd = "0.10.0"
 # io
 nom = "7.1.1"
 
-
-[dev-dependencies]
-criterion = "0.4"
-
-[[bench]]
-name = "bench_parser"
-harness = false
-
 [profile.dev]
 opt-level = 1
 
