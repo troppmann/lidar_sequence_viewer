@@ -25,6 +25,7 @@ impl Plugin for LidarPlugin {
 pub struct PlayerState {
     start_time: Option<f64>,
     sequence: Option<Sequence>,
+    sequence_number: u32,
     mesh: Option<Handle<Mesh>>,
     wait_for_buffering: bool,
     actual_frame: usize,
@@ -41,6 +42,7 @@ impl Default for PlayerState {
         Self {
             start_time: None,
             sequence: None,
+            sequence_number: 0,
             mesh: None,
             wait_for_buffering: false,
             actual_frame: 0,
@@ -74,6 +76,7 @@ impl PlayerState {
     }
     pub fn set_sequence(&mut self, sequence: Sequence){
         self.max_frame = sequence.frame_count -1;
+        self.sequence_number += 1;
         self.sequence = Some(sequence);
         self.start_frame = 0;
         self.actual_frame = 0;
@@ -168,10 +171,12 @@ fn player(
     }
 }
 
+
 #[derive(Component)]
 struct ReadFrameTask {
-    task: Task<Frame>,
+    task: Task<Result<Frame, FrameReadError>>,
     frame_number: usize,
+    sequence_number: u32,
 }
 
 fn buffer_next_frames(mut commands: Commands, mut state: ResMut<PlayerState>) {
@@ -181,6 +186,7 @@ fn buffer_next_frames(mut commands: Commands, mut state: ResMut<PlayerState>) {
     if buffer_frame == max_buffer_frame {
         return;
     }
+    let sequence_number = state.sequence_number;
     if let Some(sequence) = &mut state.sequence {
         sequence
             .load_states.iter_mut().enumerate()
@@ -192,20 +198,15 @@ fn buffer_next_frames(mut commands: Commands, mut state: ResMut<PlayerState>) {
                 skip
             })
             .take(PlayerState::BUFFER_SLIDING_WINDOW)
-            .for_each(|(iter, state)| {
-                if *state == LoadState::NotRequested {
-                    let path = sequence.point_folder.join(format!("{:0>6}.bin", iter));
-                    let label_path = sequence.label_folder.as_ref()
+            .for_each(|(iter, load_state)| {
+                if *load_state == LoadState::NotRequested {
+                    let points_path = sequence.point_folder.join(format!("{:0>6}.bin", iter));
+                    let labels_path = sequence.label_folder.as_ref()
                         .map(|path| path.join(format!("{:0>6}.label", iter)));
                     let task =
-                        thread_pool.spawn(async move { read_frame(path, label_path).map_err(|err| {
-                            println!("{err}");
-                        }).unwrap() });
-                    commands.spawn(ReadFrameTask {
-                        task,
-                        frame_number: iter,
-                    });
-                    *state = LoadState::Requested;
+                        thread_pool.spawn(async move { read_frame(points_path, labels_path)});
+                    commands.spawn(ReadFrameTask {task, frame_number: iter, sequence_number});
+                    *load_state = LoadState::Requested;
                 }
             });
         state.buffer_frame = buffer_frame;
@@ -218,9 +219,15 @@ fn handle_read_frames_task(
     mut state: ResMut<PlayerState>,
 ) {
     let frame_request = state.has_frame_request;
+    let sequence_number = state.sequence_number;
     if let Some(sequence) = &mut state.sequence {
         for (entity, mut task) in &mut read_frame_tasks {
-            if let Some(frame) = future::block_on(future::poll_once(&mut task.task)) {
+            if task.sequence_number != sequence_number{
+                commands.entity(entity).despawn();
+                sequence.load_states[task.frame_number] = LoadState::NotRequested; 
+                continue;
+            }
+            if let Some(Ok(frame)) = future::block_on(future::poll_once(&mut task.task))  {
                 sequence.frames[task.frame_number] = Some(frame);
                 sequence.load_states[task.frame_number] = LoadState::Loaded; 
                 commands.entity(entity).despawn();

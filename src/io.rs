@@ -1,7 +1,6 @@
-use std::{fs::{File, self, ReadDir}, io::Read, path::{Path, PathBuf}};
+use std::{fs::{File, self, ReadDir}, io::{Read, self}, path::PathBuf};
 use bevy::prelude::Vec3;
 use nom::{IResult, multi::many0, sequence::tuple, number::complete::{le_f32, le_u16}};
-use simple_error::bail;
 
 #[derive(PartialEq, Debug)]
 pub struct Point{
@@ -36,6 +35,25 @@ pub struct Sequence {
     pub frame_count: usize,
 }
 
+pub enum FrameReadError{
+    ReadFile(io::Error),
+    ParseFile(String),
+}
+
+pub enum SequenceReadError{
+    ReadFolder(io::Error),
+    MissingBinFiles,
+}
+
+impl std::fmt::Display for SequenceReadError{
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self{
+            SequenceReadError::ReadFolder(error) => write!(formatter, "Cannot read folder {}", error),
+            SequenceReadError::MissingBinFiles => write!(formatter, "No 'bin'-Files in Folder."),
+        }
+    }
+}
+
 fn count_frame_files_in_dir(dir: ReadDir)-> usize{
     let frame_files = dir.into_iter() .filter_map(|x| x.ok().map(|entry| entry.path())).filter(|path| match path.extension() {
         Some(x) => x == "bin",
@@ -44,13 +62,11 @@ fn count_frame_files_in_dir(dir: ReadDir)-> usize{
     frame_files.count()
 }
 
-
-// TODO: create own error types
-pub fn read_sequence_from_dir(dir_path: PathBuf)-> Result<Sequence, Box<dyn std::error::Error>>{
+pub fn read_sequence_from_dir(dir_path: PathBuf)-> Result<Sequence, SequenceReadError>{
     let velodyne = dir_path.join("velodyne");
     let mut frame_count = 0;
     if velodyne.is_dir() {
-        let dir = fs::read_dir(&velodyne)?;
+        let dir = fs::read_dir(&velodyne).map_err(|e| SequenceReadError::ReadFolder(e))?;
         frame_count = count_frame_files_in_dir(dir);
 
     }
@@ -61,7 +77,7 @@ pub fn read_sequence_from_dir(dir_path: PathBuf)-> Result<Sequence, Box<dyn std:
     };
 
     if frame_count == 0 {
-        bail!("Seqeunce folder d'ont have '.bin' files.")
+        return Err(SequenceReadError::MissingBinFiles);
     }
     Ok(Sequence{
         point_folder: velodyne,
@@ -73,18 +89,17 @@ pub fn read_sequence_from_dir(dir_path: PathBuf)-> Result<Sequence, Box<dyn std:
 }
 
 
-pub fn read_frame(points_path: PathBuf, labels_path: Option<PathBuf>) -> Result<Frame, Box<dyn std::error::Error>>{
-    println!("{points_path:?}");
-    let mut f = File::open(points_path)?;
+pub fn read_frame(points_path: PathBuf, labels_path: Option<PathBuf>) -> Result<Frame, FrameReadError>{
+    let mut f = File::open(points_path).map_err(|e| FrameReadError::ReadFile(e))?;
     let mut buffer = Vec::new();
-    f.read_to_end(&mut buffer)?;
-    let (_, points) = parse_points(&buffer).map_err(|e| e.to_owned())?;
+    f.read_to_end(&mut buffer).map_err(|e| FrameReadError::ReadFile(e))?;
+    let (_, points) = parse_points(&buffer).map_err(|e| FrameReadError::ParseFile(e.to_string()))?;
     let mut labels = None;
     if let Some(path) = labels_path { 
-        let mut f = File::open(path)?; 
+        let mut f = File::open(path).map_err(|e| FrameReadError::ReadFile(e))?; 
         let mut buffer = Vec::new();
-        f.read_to_end(&mut buffer)?;
-        let (_, label_data) = parse_labels(&buffer).map_err(|e| e.to_owned())?;
+        f.read_to_end(&mut buffer).map_err(|e| FrameReadError::ReadFile(e))?;
+        let (_, label_data) = parse_labels(&buffer).map_err(|e| FrameReadError::ParseFile(e.to_string()))?;
         labels = Some(label_data);
     }
     Ok(Frame{points, labels})
