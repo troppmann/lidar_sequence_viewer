@@ -16,6 +16,11 @@ bevy_egui = "0.17.1"
 rfd = "0.10.0"
 # io
 nom = "7.1.1"
+# config
+ron = "0.8"
+serde = { version = "1", features = ["derive"] }
+confy = { version = "0.5.1", features = ["ron_conf"], default-features = false}
+
 
 [profile.dev]
 opt-level = 1

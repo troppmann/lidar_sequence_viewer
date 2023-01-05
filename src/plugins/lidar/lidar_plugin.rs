@@ -1,11 +1,11 @@
 use bevy::{
     prelude::*,
     render::view::NoFrustumCulling,
-    tasks::{IoTaskPool, Task},
+    tasks::{IoTaskPool, Task}, utils::HashMap,
 };
 use futures_lite::future;
 
-use crate::io::*;
+use crate::{io::*, plugins::PlayerConfig};
 
 use super::instancing::*;
 
@@ -14,7 +14,9 @@ pub struct LidarPlugin;
 impl Plugin for LidarPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(PlayerState::default())
+            .insert_resource(PlayerConfig::default())
             .add_startup_system(init_sequence)
+            .add_startup_system(load_config)
             .add_system(player)
             .add_system(buffer_next_frames)
             .add_system(handle_read_frames_task)
@@ -143,10 +145,16 @@ fn init_sequence(mut state: ResMut<PlayerState>, mut meshes: ResMut<Assets<Mesh>
     }    
 }
 
+fn load_config(mut config: ResMut<PlayerConfig>){
+    config.load();
+    println!("{:?}", confy::get_configuration_file_path("lidar_viewer", None));
+}
+
 fn player(
     mut commands: Commands,
     time: Res<Time>,
     mut state: ResMut<PlayerState>,
+    config: Res<PlayerConfig>,
     query: Query<Entity, With<InstanceMaterialData>>,
 ) {
     if !state.paused && !state.wait_for_buffering{
@@ -160,7 +168,7 @@ fn player(
             if let Some(frame) = &sequence.frames[state.actual_frame] {
                 //change frame content
                 query.for_each(|entity| commands.entity(entity).despawn());
-                spawn_frame(&mut commands, frame, state.mesh.as_ref().unwrap().clone());
+                spawn_frame(&mut commands, frame, state.mesh.as_ref().unwrap().clone(), &config.actual_color_map);
                 state.last_rendered_frame = state.actual_frame;
             } else {
                 state.wait_for_buffering = true;
@@ -171,6 +179,35 @@ fn player(
     }
 }
 
+
+fn spawn_frame(commands: &mut Commands, frame: &Frame, mesh: Handle<Mesh>, color_map: &HashMap<u32, [f32;4]>) {
+    commands.spawn((
+        mesh,
+        SpatialBundle::VISIBLE_IDENTITY,
+        InstanceMaterialData(
+            if frame.labels.is_some(){
+                frame.points.iter()
+                .zip(frame.labels.as_ref().unwrap().iter())
+                .map(|(point, label)| InstanceData {
+                    position: point.position,
+                    scale: 1.0,
+                    color: label_to_color(label, &color_map),
+                })
+                .collect()
+            }else {
+                let default_color = Color::rgb_u8(247, 127, 0).as_linear_rgba_f32();
+                frame.points.iter()
+                .map(|point| InstanceData {
+                    position: point.position,
+                    scale: 1.0,
+                    color: default_color,
+                })
+                .collect()
+            }
+        ),
+        NoFrustumCulling,
+    ));
+}
 
 #[derive(Component)]
 struct ReadFrameTask {
@@ -224,7 +261,6 @@ fn handle_read_frames_task(
         for (entity, mut task) in &mut read_frame_tasks {
             if task.sequence_number != sequence_number{
                 commands.entity(entity).despawn();
-                sequence.load_states[task.frame_number] = LoadState::NotRequested; 
                 continue;
             }
             if let Some(Ok(frame)) = future::block_on(future::poll_once(&mut task.task))  {
@@ -243,75 +279,6 @@ fn handle_read_frames_task(
     }
 }
 
-fn spawn_frame(commands: &mut Commands, frame: &Frame, mesh: Handle<Mesh>) {
-    commands.spawn((
-        mesh,
-        SpatialBundle::VISIBLE_IDENTITY,
-        InstanceMaterialData(
-            if frame.labels.is_some(){
-                frame.points.iter()
-                .zip(frame.labels.as_ref().unwrap().iter())
-                .map(|(point, label)| InstanceData {
-                    position: point.position,
-                    scale: 1.0,
-                    color: label_to_color(label),
-                })
-                .collect()
-            }else {
-                let default_color = Color::rgb_u8(247, 127, 0).as_linear_rgba_f32();
-                frame.points.iter()
-                .map(|point| InstanceData {
-                    position: point.position,
-                    scale: 1.0,
-                    color: default_color,
-                })
-                .collect()
-            }
-        ),
-        NoFrustumCulling,
-    ));
-}
-
-pub fn label_to_color(label: &Label) -> [f32; 4]{
-    /*
-        0 : "unlabeled"
-        1 : "outlier"
-        10: "car"
-        11: "bicycle"
-        13: "bus"
-        15: "motorcycle"
-        16: "on-rails"
-        18: "truck"
-        20: "other-vehicle"
-        30: "person"
-        31: "bicyclist"
-        32: "motorcyclist"
-        40: "road"
-        44: "parking"
-        48: "sidewalk"
-        49: "other-ground"
-        50: "building"
-        51: "fence"
-        52: "other-structure"
-        60: "lane-marking"
-        70: "vegetation"
-        71: "trunk"
-        72: "terrain"
-        80: "pole"
-        81: "traffic-sign"
-        99: "other-object"
-        252: "moving-car"
-        253: "moving-bicyclist"
-        254: "moving-person"
-        255: "moving-motorcyclist"
-        256: "moving-on-rails"
-        257: "moving-bus"
-        258: "moving-truck"
-        259: "moving-other-vehicle"
-    */
-    match label.label {
-        10 => Color ::rgb_u8(10, 10, 200).as_linear_rgba_f32(),
-        252 => Color ::rgb_u8(10, 10, 200).as_linear_rgba_f32(),
-        _ =>  Color::rgb_u8(111, 200, 40).as_linear_rgba_f32(), 
-    }
+pub fn label_to_color(label: &Label, color_map: &HashMap<u32, [f32;4]>) -> [f32; 4]{
+    *color_map.get(&label.label.into()).unwrap_or(&[0.7, 0.4, 0.1, 1.0])
 }
