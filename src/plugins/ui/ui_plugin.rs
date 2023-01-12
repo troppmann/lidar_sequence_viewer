@@ -1,5 +1,5 @@
 use bevy::{prelude::*, tasks::{IoTaskPool, Task}};
-use bevy_egui::{*, egui::{Vec2, Visuals, Color32, RichText, Key, style::Margin, Stroke, epaint::Shadow}};
+use bevy_egui::{*, egui::{Vec2, Color32, RichText, Key, style::Margin, Stroke, epaint::Shadow}};
 use futures_lite::future;
 use rfd::{AsyncFileDialog, FileHandle};
 
@@ -29,12 +29,15 @@ struct UiHandles{
     next_frame_button: Handle<Image>,
     previous_frame_button: Handle<Image>,
 }
+//TODO: remvoe ControlState or justthe fullscreen from Local and make an interactive reaction like the PlayerState
 #[derive(Default)]
-struct ControlBarState{
+struct ControlState{
     paused_state_before_drag: bool,
     dragging: bool,
     fullscreen: bool,
 }
+
+
 
 impl FromWorld for UiHandles {
     fn from_world(world: &mut World) -> Self {
@@ -51,10 +54,19 @@ impl FromWorld for UiHandles {
 }
 
 fn setup(mut egui_context: ResMut<EguiContext>,){
-    egui_context.ctx_mut().set_visuals(Visuals{
-        dark_mode: false,
-        ..default()
-    });
+    let ctx = egui_context.ctx_mut();
+    let mut style: egui::Style = (*ctx.style()).clone();
+    style.visuals.widgets.inactive.bg_fill = Color32::TRANSPARENT;
+    let selected_color  =  Color32::from_rgb(60,60,60);
+    style.visuals.widgets.hovered.bg_fill = selected_color;
+    style.visuals.widgets.active.bg_fill = selected_color;
+    style.visuals.widgets.hovered.bg_stroke = Stroke::NONE;
+    style.visuals.widgets.active.bg_stroke = Stroke::NONE;
+    style.visuals.window_stroke = Stroke::NONE;
+    style.visuals.window_fill = Color32::from_rgb(20, 20, 20);
+    style.visuals.popup_shadow = Shadow::NONE;
+    style.visuals.override_text_color = Some(Color32::from_rgb(240,240,240));
+    ctx.set_style(style);
 }
 
 #[derive(Component)]
@@ -68,10 +80,10 @@ fn menu_bar(
     mut egui_context: ResMut<EguiContext>,
     mut commands: Commands,
     mut state: ResMut<MenuState>,
+    mut player_state: ResMut<PlayerState>,
 ) {
 
     let ctx = egui_context.ctx_mut();
-    set_button_style(ctx);
 
     let frame = egui::Frame {
         fill: Color32::from_rgba_premultiplied(10, 10, 10, 200),
@@ -103,34 +115,23 @@ fn menu_bar(
             });
 
             ui.menu_button("View", |ui| {
-                if ui.add_enabled(true, egui::Button::new("Fullscreen").shortcut_text("F").wrap(false)).clicked() {
+                if ui.add(egui::Button::new("Fullscreen").shortcut_text("F").wrap(false)).clicked() {
                     println!("Hello World");   
                 }
             });
             ui.menu_button("Playback", |ui| {
-
+                //TODO replace button new with image_and_text
+                if ui.add(egui::Button::new(if player_state.is_paused() {"Play"} else {"Pause"}).shortcut_text("Space").wrap(false)).clicked() {
+                    player_state.toggle_play();
+                }
             });
             ui.menu_button("Label", |ui|{
-
+                
             });
         });
     });
 }
 
-fn set_button_style(ctx: &egui::Context) {
-    let mut style: egui::Style = (*ctx.style()).clone();
-    style.visuals.widgets.inactive.bg_fill = Color32::TRANSPARENT;
-    let selected_color  =  Color32::from_rgb(60,60,60);
-    style.visuals.widgets.hovered.bg_fill = selected_color;
-    style.visuals.widgets.active.bg_fill = selected_color;
-    style.visuals.widgets.hovered.bg_stroke = Stroke::NONE;
-    style.visuals.widgets.active.bg_stroke = Stroke::NONE;
-    style.visuals.window_stroke = Stroke::NONE;
-    style.visuals.window_fill = Color32::from_rgb(20, 20, 20);
-    style.visuals.popup_shadow = Shadow::NONE;
-    style.visuals.override_text_color = Some(Color32::from_rgb(240,240,240));
-    ctx.set_style(style);
-}
 
 fn handle_load_folder_task(
     mut commands: Commands,
@@ -157,7 +158,7 @@ fn control_bar(
     mut player: ResMut<PlayerState>, 
     mut windows: ResMut<Windows>,
     images: Local<UiHandles>,
-    mut state: Local<ControlBarState>,
+    mut state: Local<ControlState>,
 ) {
     let frame = egui::Frame {fill: Color32::from_rgba_premultiplied(10, 10, 10, 200), ..egui::Frame::default() };
     let show_play_button = state.dragging && state.paused_state_before_drag || !state.dragging && player.is_paused(); 
