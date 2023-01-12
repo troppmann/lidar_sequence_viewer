@@ -16,6 +16,8 @@ Renders the lidar data from the KITTI Benchmark[1,2].
 - [x] Render labeled information
 - [ ] ToolTips
 - [ ] PlaySpeed Manipulation
+- [ ] CameraSpeed Manipulation
+- [ ] Camera FOV changes
 - [x] Load files dynamically
 - [x] Change Sequences 
 - [x] Pick Sequence UI

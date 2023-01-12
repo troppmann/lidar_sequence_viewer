@@ -384,7 +384,7 @@ impl<'a> VideoSlider<'a> {
             ui.painter().add(epaint::RectShape {
                 rect: rail_rect,
                 rounding: ui.visuals().widgets.inactive.rounding,
-                fill: ui.visuals().widgets.inactive.bg_fill,
+                fill: Color32::from_rgb(60, 60, 60),
                 stroke: Default::default(),
             });
             let position_buffer = self.position_from_value(self.buffer_value, position_range.clone());
