@@ -1,5 +1,5 @@
 use bevy::{prelude::*, tasks::{IoTaskPool, Task}};
-use bevy_egui::{*, egui::{Vec2, Color32, RichText, Key, style::Margin, Stroke, epaint::Shadow}};
+use bevy_egui::{*, egui::{Vec2, Color32, RichText, Key, style::Margin, Stroke, epaint::Shadow, KeyboardShortcut, Modifiers}};
 use futures_lite::future;
 use rfd::{AsyncFileDialog, FileHandle};
 
@@ -15,10 +15,12 @@ impl Plugin for UiPlugin {
         app
             .add_plugin(EguiPlugin)
             .add_startup_system(setup)
-            .insert_resource(MenuState::default())
-            .add_system(control_bar)
+            .insert_resource(UiState::default())
             .add_system(handle_load_folder_task)
-            .add_system(menu_bar);
+            .add_system(control_bar.before(handle_requests))
+            .add_system(handle_keyboard.before(handle_requests))
+            .add_system(menu_bar.before(handle_requests))
+            .add_system(handle_requests);
     }
 }
 struct UiHandles{
@@ -29,12 +31,10 @@ struct UiHandles{
     next_frame_button: Handle<Image>,
     previous_frame_button: Handle<Image>,
 }
-//TODO: remvoe ControlState or justthe fullscreen from Local and make an interactive reaction like the PlayerState
 #[derive(Default)]
-struct ControlState{
+struct ControlBarState{
     paused_state_before_drag: bool,
     dragging: bool,
-    fullscreen: bool,
 }
 
 
@@ -68,23 +68,79 @@ fn setup(mut egui_context: ResMut<EguiContext>,){
     style.visuals.override_text_color = Some(Color32::from_rgb(240,240,240));
     ctx.set_style(style);
 }
+#[derive(Copy,Clone)]
+enum FolderTaskType {
+    Seqeunce, Label
+}
 
 #[derive(Component)]
-pub struct LoadFolderTask(Task<Option<FileHandle>>);
+struct LoadFolderTask {
+    task: Task<Option<FileHandle>>,
+    folder_type: FolderTaskType,
+}
+
+#[derive(Default)]
+struct ToggleState{
+    state: bool,
+    request: bool,
+}
+impl ToggleState {
+    fn request(&mut self) {
+        self.request = true;
+    } 
+    fn on_request<F>(&mut self, f: F)
+    where 
+        F: FnOnce(bool),
+    {
+        if self.request {
+            self.state = !self.state;
+            self.request = false;
+            f(self.state);
+        } 
+    }
+}
+#[derive(Default)]
+struct DialogState {
+    request: bool,
+    opened: bool,
+}
+impl DialogState {
+    fn request(&mut self){
+        if !self.opened {
+            self.request = true;
+        }
+    }
+    fn on_request<F>(&mut self, f: F)
+    where
+        F: FnOnce(), 
+    {   
+        if self.request {
+            self.opened = true;
+            self.request = false;
+            f();
+        }
+    }
+    fn is_open(&self) -> bool{
+        self.opened
+    } 
+    fn closed(&mut self) {
+        self.request = false;
+        self.opened = false;
+    }
+}
 
 #[derive(Resource, Default)]
-pub struct MenuState{
-    opened_folder_dialog: bool,
+pub struct UiState{
+    folder_dialog: DialogState,
+    label_folder_dialog: DialogState,
+    fullscreen: ToggleState,
 }
 fn menu_bar(
     mut egui_context: ResMut<EguiContext>,
-    mut commands: Commands,
-    mut state: ResMut<MenuState>,
+    mut ui_state: ResMut<UiState>,
     mut player_state: ResMut<PlayerState>,
 ) {
-
     let ctx = egui_context.ctx_mut();
-
     let frame = egui::Frame {
         fill: Color32::from_rgba_premultiplied(10, 10, 10, 200),
         inner_margin: Margin{left: 6.0, top: 2.0, bottom: 2.0, ..Margin::default()}, 
@@ -93,20 +149,8 @@ fn menu_bar(
     egui::TopBottomPanel::top("menu bar").show_separator_line(false).frame(frame).show(ctx, |ui|{
         ui.horizontal(|ui| {
             ui.menu_button("File", |ui| {
-                if ui.add_enabled(!state.opened_folder_dialog, egui::Button::new("Open Sequence Folder...").shortcut_text("O").wrap(false)).clicked() || 
-                    ui.input().key_pressed(Key::O) && !state.opened_folder_dialog {
-                    let task_pool = IoTaskPool::get();
-                    let task = task_pool.spawn(async move {
-                        AsyncFileDialog::new()
-                                .set_directory("/")
-                                .pick_folder()
-                                .await
-                        
-                    });
-                    commands.spawn(LoadFolderTask(task));
-                    state.opened_folder_dialog = true;
-                }
-                if ui.add_enabled(true, egui::Button::new("Open Label Folder...").shortcut_text("L").wrap(false)).clicked() {
+                if ui.add_enabled(!ui_state.folder_dialog.is_open(), egui::Button::new("Open Sequence Folder...").shortcut_text("O").wrap(false)).clicked() {
+                    ui_state.folder_dialog.request(); 
                 }
                 ui.separator();
                 if ui.button("Exit").clicked() {
@@ -116,7 +160,7 @@ fn menu_bar(
 
             ui.menu_button("View", |ui| {
                 if ui.add(egui::Button::new("Fullscreen").shortcut_text("F").wrap(false)).clicked() {
-                    println!("Hello World");   
+                    ui_state.fullscreen.request();   
                 }
             });
             ui.menu_button("Playback", |ui| {
@@ -125,30 +169,47 @@ fn menu_bar(
                     player_state.toggle_play();
                 }
             });
-            ui.menu_button("Label", |ui|{
-                
-            });
+            ui.menu_button("Label", |ui| {
+                if ui.add_enabled(!ui_state.label_folder_dialog.is_open(), egui::Button::new("Open Label Folder...").shortcut_text("L").wrap(false)).clicked() {
+                    ui_state.label_folder_dialog.request(); 
+                }
+                if ui.add(egui::Button::new("Discard").shortcut_text(ctx.format_shortcut(&KeyboardShortcut{key: Key::L, modifiers: Modifiers::SHIFT})).wrap(false)).clicked() {
+                    player_state.discard_labels();
+                }
+            })
         });
     });
 }
 
-
 fn handle_load_folder_task(
     mut commands: Commands,
     mut read_frame_tasks: Query<(Entity, &mut LoadFolderTask)>,
-    mut menu_state: ResMut<MenuState>,
+    mut menu_state: ResMut<UiState>,
     mut player_state: ResMut<PlayerState>,
 ) {
-    for (entity, mut task) in &mut read_frame_tasks {
-        if let Some(folder_task) = future::block_on(future::poll_once(&mut task.0)) {
-            if let Some(folder) = folder_task{
-                match io::read_sequence_from_dir(folder.path().into()) {
-                    Ok(sequence) => player_state.set_sequence(sequence),
-                    Err(e) => println!("{}", e),
+    for (entity, mut folder_task) in &mut read_frame_tasks {
+        let folder_type = folder_task.folder_type;
+        if let Some(file_handle) = future::block_on(future::poll_once(&mut folder_task.task)) {
+            if let Some(folder) = file_handle{
+                match folder_type {
+                    FolderTaskType::Seqeunce => {
+                        match io::read_sequence_from_dir(folder.path().into()) {
+                            Ok(sequence) => player_state.set_sequence(sequence),
+                            Err(e) => println!("{}", e),
+                        }
+                    },
+                    FolderTaskType::Label => {
+                        if let Err(e) = player_state.try_set_labels(folder.path().into()){
+                            println!("{}", e);
+                        }
+                    }
                 }
             }
-            menu_state.opened_folder_dialog = false;
             commands.entity(entity).despawn();
+            match folder_type {
+                FolderTaskType::Seqeunce => menu_state.folder_dialog.closed(),
+                FolderTaskType::Label =>menu_state.label_folder_dialog.closed(), 
+            }
         }
     }
 }
@@ -156,17 +217,17 @@ fn handle_load_folder_task(
 fn control_bar(
     mut egui_context: ResMut<EguiContext>,
     mut player: ResMut<PlayerState>, 
-    mut windows: ResMut<Windows>,
     images: Local<UiHandles>,
-    mut state: Local<ControlState>,
+    mut control_bar_state: Local<ControlBarState>,
+    mut ui_state: ResMut<UiState>,
 ) {
     let frame = egui::Frame {fill: Color32::from_rgba_premultiplied(10, 10, 10, 200), ..egui::Frame::default() };
-    let show_play_button = state.dragging && state.paused_state_before_drag || !state.dragging && player.is_paused(); 
+    let show_play_button = control_bar_state.dragging && control_bar_state.paused_state_before_drag || !control_bar_state.dragging && player.is_paused(); 
     let play_button = egui_context.add_image(match show_play_button {
         true => images.play_button.clone_weak(),
         false => images.pause_button.clone_weak(),
     });
-    let fullscreen_button = egui_context.add_image(match state.fullscreen {
+    let fullscreen_button = egui_context.add_image(match ui_state.fullscreen.state {
         true => images.fullscreen_exit_button.clone_weak(),
         false => images.fullscreen_enter_button.clone_weak(),
     });
@@ -185,43 +246,105 @@ fn control_bar(
                 .slider_color(Color32::from_rgb(250, 11, 11))
                 .show_value(false));
             if slider_response.drag_started(){
-                state.paused_state_before_drag = player.is_paused();
-                state.dragging = true;
+                control_bar_state.paused_state_before_drag = player.is_paused();
+                control_bar_state.dragging = true;
                 player.pause()
             }
             if slider_response.drag_released(){
-                if !state.paused_state_before_drag {
+                if !control_bar_state.paused_state_before_drag {
                     player.play();
                 }
-                state.dragging = false;
+                control_bar_state.dragging = false;
             }
             if slider_response.changed(){
                 player.request_frame(frame);
             }
         });
         ui.horizontal(|ui| {
+            let button_size = Vec2::new(20.0, 20.0);
             ui.add_space(15.0);
-            if ui.add(egui::ImageButton::new(previous_frame_button, Vec2::new(20.0, 20.0)).frame(false)).clicked() || ui.input().key_pressed(Key::ArrowLeft) {
-                player.request_frame(frame.saturating_sub(1));
+            if ui.add(egui::ImageButton::new(previous_frame_button, button_size).frame(false)).clicked() || ui.input().key_pressed(Key::ArrowLeft) {
+                player.previous_frame();
             }
-            if ui.add(egui::ImageButton::new(play_button, Vec2::new(20.0, 20.0)).frame(false)).clicked() ||
-            ui.input().key_pressed(Key::Space) {
+            if ui.add(egui::ImageButton::new(play_button, button_size).frame(false)).clicked() {
                 player.toggle_play();
             }
-            if ui.add(egui::ImageButton::new(next_frame_button, Vec2::new(20.0, 20.0)).frame(false)).clicked() || ui.input().key_pressed(Key::ArrowRight){
-                player.request_frame(frame + 1);
+            if ui.add(egui::ImageButton::new(next_frame_button, button_size).frame(false)).clicked() {
+                player.next_frame();
             }
             ui.add_sized(bevy_egui::egui::Vec2::new(40.0,20.0), 
             egui::Label::new(RichText::new(format!("{} / {}", frame, max_frame)).color(Color32::WHITE).text_style(egui::TextStyle::Button)));
             let padding = 35.0;
             ui.add_space(ui.available_width() - padding);
-            if ui.add(egui::ImageButton::new(fullscreen_button, Vec2::new(20.0, 20.0)).frame(false)).clicked() ||
-                ui.input().key_pressed(Key::F) {
-                state.fullscreen = !state.fullscreen;
-                let window = windows.primary_mut();
-                window.set_mode(if state.fullscreen {WindowMode::BorderlessFullscreen} else {WindowMode::Windowed});
+            if ui.add(egui::ImageButton::new(fullscreen_button, button_size).frame(false)).clicked() {
+                ui_state.fullscreen.request();
             }
         });
         ui.add_space(5.0);
     });
 }
+
+fn handle_requests(
+    mut ui_state: ResMut<UiState>,
+    mut windows: ResMut<Windows>,
+    mut commands: Commands,
+){
+    ui_state.fullscreen.on_request(|state| {
+        let window = windows.primary_mut();
+        let mode = match state {
+            true => WindowMode::BorderlessFullscreen, 
+            false => WindowMode::Windowed,
+        };
+        window.set_mode(mode);
+    });
+    ui_state.folder_dialog.on_request(|| {
+        spawn_load_folder_task(&mut commands, FolderTaskType::Seqeunce);
+    });
+    ui_state.label_folder_dialog.on_request(|| {
+        spawn_load_folder_task(&mut commands, FolderTaskType::Label);
+    });
+}
+
+fn spawn_load_folder_task(
+    commands: &mut Commands, 
+    folder_type: FolderTaskType,
+) {
+    let task_pool = IoTaskPool::get();
+    let task = task_pool.spawn(async move {
+        AsyncFileDialog::new()
+                .set_directory("/")
+                .pick_folder()
+                .await
+        
+    });
+    commands.spawn(LoadFolderTask{task, folder_type});
+}
+
+
+fn handle_keyboard(
+    input: Res<Input<KeyCode>>,
+    mut player: ResMut<PlayerState>, 
+    mut ui_state: ResMut<UiState>,
+){
+    if input.just_pressed(KeyCode::F) || input.just_pressed(KeyCode::F12) {
+        ui_state.fullscreen.request();
+    }
+    if input.just_pressed(KeyCode::Space) {
+        player.toggle_play();
+    }
+    if input.pressed(KeyCode::Left) {
+        player.previous_frame();      
+    }
+    if input.pressed(KeyCode::Right) {
+        player.next_frame();      
+    }
+    if input.pressed(KeyCode::O) {
+        ui_state.folder_dialog.request();
+    }
+    if input.pressed(KeyCode::L) {
+        ui_state.label_folder_dialog.request();
+    }
+    
+}
+
+

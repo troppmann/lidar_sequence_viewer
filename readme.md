@@ -12,7 +12,7 @@ Renders the lidar data from the KITTI Benchmark[1,2].
 - [x] Render in realtime
 - [x] Create a videoplayer UI
 - [x] Manipulate time with the UI
-- [ ] KeyboardInput & UI Overhall
+- [x] KeyboardInput & UI Overhall
 - [x] Render labeled information
 - [ ] ToolTips
 - [ ] PlaySpeed Manipulation

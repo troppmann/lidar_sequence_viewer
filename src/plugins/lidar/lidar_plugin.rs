@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use bevy::{
     prelude::*,
     render::view::NoFrustumCulling,
@@ -76,6 +78,28 @@ impl PlayerState {
     pub fn get_max_frame(&self) -> usize{
         self.max_frame
     }
+    pub fn try_set_labels(&mut self, path: PathBuf) -> Result<(), SequenceReadError>{
+        crate::io::is_valid_label_dir(path.clone(), self.max_frame + 1)?;
+        self.set_label_intern(Some(path));
+        Ok(())
+    }
+    pub fn discard_labels(&mut self){
+        self.set_label_intern(None);
+    }
+    fn set_label_intern(&mut self, label: Option<PathBuf>){
+        if let Some(sequence) = &mut self.sequence{
+            sequence.label_folder = label;
+            for frame in &mut sequence.frames{
+                *frame = None;
+            }
+            for load_state in &mut sequence.load_states {
+                *load_state = LoadState::NotRequested;
+            }
+            self.last_rendered_frame = usize::MAX;
+            self.buffer_frame = self.actual_frame;
+        }
+    }
+
     pub fn set_sequence(&mut self, sequence: Sequence){
         self.max_frame = sequence.frame_count -1;
         self.sequence_number += 1;
@@ -93,6 +117,12 @@ impl PlayerState {
         self.buffer_frame = frame;
         self.start_time = None;
         self.free_memory_after_request();
+    }
+    pub fn next_frame(&mut self) {
+        self.request_frame(self.actual_frame + 1);
+    }
+    pub fn previous_frame(&mut self){
+        self.request_frame(self.actual_frame.saturating_sub(1));   
     }
     pub fn toggle_play(&mut self) {
         self.paused = !self.paused;
