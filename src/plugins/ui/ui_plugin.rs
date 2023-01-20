@@ -152,8 +152,12 @@ fn control_bar(
             }
             ui.add_sized(bevy_egui::egui::Vec2::new(40.0,20.0), 
             egui::Label::new(RichText::new(format!("{} / {}", frame, max_frame)).color(Color32::WHITE).text_style(egui::TextStyle::Button)));
-            let padding = 35.0;
+            let padding = 80.0;
             ui.add_space(ui.available_width() - padding);
+            let mut time_scale = player.get_time_scale();
+            if ui.add(egui::widgets::DragValue::new(&mut time_scale).clamp_range(0.0..=1000.0).speed(0.1).suffix("x")).changed() {
+                player.set_time_scale(time_scale);
+            }
             if ui.add(egui::ImageButton::new(fullscreen_button, button_size).frame(false)).clicked() {
                 ui_state.fullscreen.request();
             }

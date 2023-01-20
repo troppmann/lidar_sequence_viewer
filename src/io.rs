@@ -26,7 +26,6 @@ pub enum LoadState{
     Requested,
     Loaded,
 }
-
 pub struct Sequence {
     pub point_folder: PathBuf, 
     pub label_folder: Option<PathBuf>,
@@ -49,8 +48,6 @@ pub enum SequenceReadError{
         received: usize,
     },
 }
-
-
 
 impl std::fmt::Display for SequenceReadError{
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -152,5 +149,3 @@ fn read_label(input: &[u8]) -> IResult<&[u8], Label>{
     let (input, (label, instance_id)) = tuple((le_u16, le_u16))(input)?;
     Ok((input, Label{label, instance_id}))
 }
-
-

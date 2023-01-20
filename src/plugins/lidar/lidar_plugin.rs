@@ -25,6 +25,11 @@ impl Plugin for LidarPlugin {
             .add_plugin(InstancingPlugin);
     }
 }
+struct SpeedSettings{
+    sensor_fps: f64,
+    time_scale: f64,
+}
+
 #[derive(Resource)]
 pub struct PlayerState {
     start_time: Option<f64>,
@@ -39,6 +44,7 @@ pub struct PlayerState {
     last_rendered_frame: usize,
     has_frame_request: bool,
     paused: bool,
+    speed: SpeedSettings,
 }
 
 impl Default for PlayerState {
@@ -56,6 +62,7 @@ impl Default for PlayerState {
             last_rendered_frame: usize::MAX,
             has_frame_request: false,
             paused: true,
+            speed: SpeedSettings { sensor_fps: 10.0, time_scale: 1.0 },
         }
     }
 }
@@ -65,7 +72,6 @@ impl PlayerState {
     const MAX_BUFFER_RANGE: usize = 300;
     const BUFFER_SLIDING_WINDOW: usize = 5;
     const MEMORY_RANGE: usize = 500;
-    const SENSOR_FRAMES_PER_SECONDS: f64 = 10.0;
     pub fn is_paused(&self) -> bool {
         self.paused
     }
@@ -98,6 +104,20 @@ impl PlayerState {
             self.last_rendered_frame = usize::MAX;
             self.request_frame(self.actual_frame);
         }
+    }
+    pub fn set_time_scale(&mut self, time_scale: f64){
+        self.speed.time_scale = time_scale.max(0.0);
+        self.start_time = None;
+        self.start_frame = self.actual_frame;
+    }
+    pub fn set_sensor_fps(&mut self, fps: f64) {
+        self.speed.sensor_fps = fps;
+    }
+    pub fn get_time_scale(&self) -> f64 {
+        self.speed.time_scale
+    }
+    pub fn get_sensof_fps(&self) -> f64 {
+        self.speed.sensor_fps
     }
 
     pub fn set_sequence(&mut self, sequence: Sequence){
@@ -139,7 +159,7 @@ impl PlayerState {
     }
     fn update(&mut self, time_in_seconds: f64) {
         let passed_time = time_in_seconds - *self.start_time.get_or_insert(time_in_seconds);
-        self.actual_frame = ((passed_time * PlayerState::SENSOR_FRAMES_PER_SECONDS) as usize + self.start_frame)
+        self.actual_frame = ((passed_time * self.speed.sensor_fps * self.speed.time_scale) as usize + self.start_frame)
             .min(self.max_frame)
             .max(0);
     }
@@ -169,6 +189,7 @@ impl PlayerState {
 
 fn init_sequence(mut state: ResMut<PlayerState>, mut meshes: ResMut<Assets<Mesh>>) {
     state.mesh = Some(meshes.add(Mesh::from(shape::Cube { size: 0.04 })));
+    //TODO move default start scene to settings
     let path = "../SemanticKITTI/dataset/sequences/00/".into();
     if let Ok(sequence) = read_sequence_from_dir(path) {
         state.set_sequence(sequence);
