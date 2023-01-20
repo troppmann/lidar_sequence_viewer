@@ -96,7 +96,7 @@ impl PlayerState {
                 *load_state = LoadState::NotRequested;
             }
             self.last_rendered_frame = usize::MAX;
-            self.buffer_frame = self.actual_frame;
+            self.request_frame(self.actual_frame);
         }
     }
 

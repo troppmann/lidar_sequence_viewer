@@ -23,7 +23,7 @@ Renders the lidar data from the KITTI Benchmark[1,2].
 - [x] Pick Sequence UI
 - [x] Limit Memory Consumption
 - [ ] Color GUI Config
-- [ ] Able to open seperate label folder
+- [x] Able to open seperate label folder
 ## References
 [1]&nbsp;&nbsp;&nbsp;Andreas Geiger, Philip Lenz, and Raquel Urtasun. Are we ready for Autonomous Driving? The KITTI Vision Benchmark Suite. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 2012
 

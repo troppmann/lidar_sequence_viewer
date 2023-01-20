@@ -41,6 +41,7 @@ pub enum FrameReadError{
 }
 
 pub enum SequenceReadError{
+    FolderDontExist,
     ReadFolder(io::Error),
     MissingFilesWithExtension(String),
     LabelFilesCountMissmatch{
@@ -49,14 +50,17 @@ pub enum SequenceReadError{
     },
 }
 
+
+
 impl std::fmt::Display for SequenceReadError{
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self{
+            SequenceReadError::FolderDontExist => write!(formatter, "Folder don't exist."),
             SequenceReadError::ReadFolder(error) => write!(formatter, "Cannot read folder {}", error),
             SequenceReadError::MissingFilesWithExtension(extension) => write!(formatter, "No '{}'-Files in Folder.", extension),
             SequenceReadError::LabelFilesCountMissmatch{expected, received} => 
                 write!(formatter, "The amount of label files missmatch the sequences frame amount.\n Label Files: {}\n Frames in Seqeunce:{}", received, expected),
-        }
+         }
     }
 }
 
@@ -69,43 +73,36 @@ fn count_files_with_extension(dir: ReadDir, extension: &str)-> usize{
 }
 pub fn is_valid_label_dir(dir_path: PathBuf, frame_count: usize) -> Result<(), SequenceReadError>{
     let read_dir = fs::read_dir(&dir_path).map_err(|e| SequenceReadError::ReadFolder(e))?;
-    let label_count = count_files_with_extension(read_dir, "label");
-    if label_count == 0 {
-        return Err(SequenceReadError::MissingFilesWithExtension("label".to_string()));
-    } else if label_count != frame_count {
-        return Err(SequenceReadError::LabelFilesCountMissmatch { 
+    match count_files_with_extension(read_dir, "label") {
+        label_count if label_count == frame_count => Ok(()), 
+        0 => Err(SequenceReadError::MissingFilesWithExtension("label".to_string())),
+        label_count => Err(SequenceReadError::LabelFilesCountMissmatch { 
             expected: label_count, 
-            received: frame_count });
+            received: frame_count }),
     }
-    Ok(())
 }
-//TODO make better
 pub fn read_sequence_from_dir(dir_path: PathBuf)-> Result<Sequence, SequenceReadError>{
-    let mut velodyne = dir_path.join("velodyne");
-    let mut frame_count = 0;
-    if velodyne.is_dir() {
-        let read_dir = fs::read_dir(&velodyne).map_err(|e| SequenceReadError::ReadFolder(e))?;
-        frame_count = count_files_with_extension(read_dir, "bin");
-    } 
-    if frame_count == 0 {
-        let read_dir = fs::read_dir(&dir_path).map_err(|e| SequenceReadError::ReadFolder(e))?;
-        frame_count = count_files_with_extension(read_dir, "bin");
-        if frame_count == 0 {
-            return Err(SequenceReadError::MissingFilesWithExtension("bin".into()));
-        }
-        velodyne = dir_path.clone();
-    }
-    let labels = dir_path.join("labels");
-    let mut label_folder = None;
-    if labels.is_dir() {
-        let read_dir = fs::read_dir(&labels).map_err(|e| SequenceReadError::ReadFolder(e))?;
-        let label_count = count_files_with_extension(read_dir, "label");
-        if label_count == frame_count {
-            label_folder = Some(labels);
-        }
-    }
+    let velodyne_path = dir_path.join("velodyne");
+    let (frame_count, point_folder)  = match count_folder_files_with_extension(&velodyne_path, "bin") {
+        Ok(0) => return Err(SequenceReadError::MissingFilesWithExtension("bin".into())),    
+        Ok(count) => (count, velodyne_path),
+        Err(SequenceReadError::FolderDontExist) => match count_folder_files_with_extension(&dir_path, "bin"){
+            Ok(count) => (count, dir_path.clone()),
+            Err(e) => return Err(e),
+        },
+        Err(e) => return Err(e),
+    };
+
+    let labels_path = dir_path.join("labels");
+    let label_folder = match count_folder_files_with_extension(&labels_path, "label") {
+        Ok(count) if frame_count == count => Some(labels_path),
+        Ok(_) => None, 
+        Err(SequenceReadError::FolderDontExist) => None,
+        Err(e) => return Err(e),
+    };
+
     Ok(Sequence{
-        point_folder: velodyne,
+        point_folder,
         label_folder,
         frame_count,
         load_states: vec![LoadState::NotRequested; frame_count],
@@ -113,6 +110,14 @@ pub fn read_sequence_from_dir(dir_path: PathBuf)-> Result<Sequence, SequenceRead
     })
 }
 
+fn count_folder_files_with_extension(folder: &PathBuf, extension: &str) -> Result<usize, SequenceReadError>{
+    if !folder.is_dir() {
+        return Err(SequenceReadError::FolderDontExist);
+    }
+    let read_dir = fs::read_dir(folder).map_err(|e| SequenceReadError::ReadFolder(e))?;
+    let frame_count = count_files_with_extension(read_dir, extension);
+    Ok(frame_count)
+}
 
 pub fn read_frame(points_path: PathBuf, labels_path: Option<PathBuf>) -> Result<Frame, FrameReadError>{
     let mut f = File::open(points_path).map_err(|e| FrameReadError::ReadFile(e))?;

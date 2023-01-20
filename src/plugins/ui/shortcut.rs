@@ -23,7 +23,11 @@ pub fn handle_shortcuts(
     if input.pressed(KeyCode::O) {
         ui_state.folder_dialog.request();
     }
+    let shift = input.any_pressed([KeyCode::LShift, KeyCode::RShift]);
     if input.pressed(KeyCode::L) {
-        ui_state.label_folder_dialog.request();
+        match shift {
+            true => player.discard_labels(),
+            false => ui_state.label_folder_dialog.request(),
+        }
     }
 }
