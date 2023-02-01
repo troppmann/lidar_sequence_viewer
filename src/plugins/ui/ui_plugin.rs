@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_egui::{*, egui::{Vec2, Color32, RichText, Key, style::Margin, Stroke, epaint::Shadow, KeyboardShortcut, Modifiers}};
 
 use crate::plugins::lidar;
-use super::{request::*, shortcut, task, video_slider::*, image::*};
+use super::{request::*, shortcut, task, video_slider::*, image::*, settings};
 
 pub struct UiPlugin;
 impl Plugin for UiPlugin {
@@ -15,6 +15,7 @@ impl Plugin for UiPlugin {
             .add_system(control_bar.before(handle_requests))
             .add_system(shortcut::handle_shortcuts.before(handle_requests))
             .add_system(menu_bar.before(handle_requests))
+            .add_system(settings::color::window.after(menu_bar).after(control_bar))
             .add_system(handle_requests);
     }
 }
@@ -29,7 +30,8 @@ fn setup(mut egui_context: ResMut<EguiContext>,){
     style.visuals.widgets.active.bg_fill = selected_color;
     style.visuals.widgets.hovered.bg_stroke = Stroke::NONE;
     style.visuals.widgets.active.bg_stroke = Stroke::NONE;
-    style.visuals.window_stroke = Stroke::NONE;
+    style.visuals.window_shadow = Shadow::NONE;
+    style.visuals.window_stroke = Stroke{ width: 0.1, color: Color32::GRAY };
     style.visuals.window_fill = Color32::from_rgb(20, 20, 20);
     style.visuals.popup_shadow = Shadow::NONE;
     style.visuals.override_text_color = Some(Color32::from_rgb(240,240,240));
@@ -40,6 +42,7 @@ pub struct UiState{
     pub folder_dialog: DialogRequest,
     pub label_folder_dialog: DialogRequest,
     pub fullscreen: ToggleRequest,
+    pub color_settings_visible: bool,
 }
 fn menu_bar(
     mut egui_context: ResMut<EguiContext>,
@@ -57,30 +60,39 @@ fn menu_bar(
             ui.menu_button("File", |ui| {
                 if ui.add_enabled(!ui_state.folder_dialog.is_open(), egui::Button::new("Open Sequence Folder...").shortcut_text("O").wrap(false)).clicked() {
                     ui_state.folder_dialog.request(); 
+                    ui.close_menu();
                 }
                 ui.separator();
                 if ui.button("Exit").clicked() {
-
                 }        
             });
 
             ui.menu_button("View", |ui| {
                 if ui.add(egui::Button::new("Fullscreen").shortcut_text("F").wrap(false)).clicked() {
                     ui_state.fullscreen.request();   
+                    ui.close_menu();
                 }
             });
             ui.menu_button("Playback", |ui| {
                 //TODO replace button new with image_and_text
                 if ui.add(egui::Button::new(if player_state.is_paused() {"Play"} else {"Pause"}).shortcut_text("Space").wrap(false)).clicked() {
                     player_state.toggle_play();
+                    ui.close_menu();
                 }
             });
             ui.menu_button("Label", |ui| {
                 if ui.add_enabled(!ui_state.label_folder_dialog.is_open(), egui::Button::new("Open Label Folder...").shortcut_text("L").wrap(false)).clicked() {
                     ui_state.label_folder_dialog.request(); 
+                    ui.close_menu();
                 }
                 if ui.add(egui::Button::new("Discard").shortcut_text(ctx.format_shortcut(&KeyboardShortcut{key: Key::L, modifiers: Modifiers::SHIFT})).wrap(false)).clicked() {
                     player_state.discard_labels();
+                    ui.close_menu();
+                }
+                ui.separator();
+                if ui.add(egui::Button::new("Color-Settings").wrap(false)).clicked() {
+                    ui_state.color_settings_visible = !ui_state.color_settings_visible;
+                    ui.close_menu();
                 }
             })
         });

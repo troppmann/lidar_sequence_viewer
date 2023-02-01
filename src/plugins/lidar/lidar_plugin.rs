@@ -121,7 +121,7 @@ impl PlayerState {
     }
 
     pub fn set_sequence(&mut self, sequence: Sequence){
-        self.max_frame = sequence.frame_count -1;
+        self.max_frame = sequence.frame_count - 1;
         self.sequence_number += 1;
         self.sequence = Some(sequence);
         self.start_frame = 0;

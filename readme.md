@@ -21,6 +21,7 @@ Renders the lidar data from the KITTI Benchmark[1,2].
 - [x] Load files dynamically
 - [x] Change Sequences 
 - [x] Pick Sequence UI
+- [ ] Error PopUp or log
 - [x] Limit Memory Consumption
 - [ ] Color GUI Config
 - [ ] Display information about hovered item under cursor
