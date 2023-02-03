@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 type ColorRgbU8 = [u8; 3];
 type ColorRgbaF32 = [f32; 4];
 
-#[derive(Debug, Serialize,Deserialize)]
+#[derive(Debug, Clone, Serialize,Deserialize)]
 pub struct LabelInfo {
     pub name: String,
     pub color: ColorRgbU8,
