@@ -1,54 +1,68 @@
+use std::collections::BTreeMap;
+
 use bevy::{
     prelude::{Color, Resource},
     utils::HashMap,
 };
 use serde::{Deserialize, Serialize};
 
-type ColorRgbaU8 = [u8; 4];
+type ColorRgbU8 = [u8; 3];
 type ColorRgbaF32 = [f32; 4];
+
+#[derive(Debug, Serialize,Deserialize)]
+pub struct LabelInfo {
+    pub name: String,
+    pub color: ColorRgbU8,
+}
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
-    pub color_map: HashMap<u32, ColorRgbaU8>,
+    pub label_map: BTreeMap<u32, LabelInfo>,
 }
+impl From<(&str, [u8;3])> for LabelInfo {
+    fn from(value: (&str, [u8;3])) -> Self {
+        Self{name:value.0.to_string(), color:value.1}
+    }
+}
+
 
 impl Default for Config {
     fn default() -> Self {
         Self {
-            color_map: HashMap::from([
-                (0, [0, 0, 0, 0]),
-                (1, [0, 0, 255, 0]),
-                (10, [245, 150, 100, 0]),
-                (11, [245, 230, 100, 0]),
-                (13, [250, 80, 100, 0]),
-                (15, [150, 60, 30, 0]),
-                (16, [255, 0, 0, 0]),
-                (18, [180, 30, 80, 0]),
-                (20, [255, 0, 0, 0]),
-                (30, [30, 30, 255, 0]),
-                (31, [200, 40, 255, 0]),
-                (32, [90, 30, 150, 0]),
-                (40, [255, 0, 255, 0]),
-                (44, [255, 150, 255, 0]),
-                (48, [75, 0, 75, 0]),
-                (49, [75, 0, 175, 0]),
-                (50, [0, 200, 255, 0]),
-                (51, [50, 120, 255, 0]),
-                (52, [0, 150, 255, 0]),
-                (60, [170, 255, 150, 0]),
-                (70, [0, 175, 0, 0]),
-                (71, [0, 60, 135, 0]),
-                (72, [80, 240, 150, 0]),
-                (80, [150, 240, 255, 0]),
-                (81, [0, 0, 255, 0]),
-                (99, [255, 255, 50, 0]),
-                (252, [245, 150, 100, 0]),
-                (256, [255, 0, 0, 0]),
-                (253, [200, 40, 255, 0]),
-                (254, [30, 30, 255, 0]),
-                (255, [90, 30, 150, 0]),
-                (257, [250, 80, 100, 0]),
-                (258, [180, 30, 80, 0]),
-                (259, [255, 0, 0, 0]),
+            label_map: BTreeMap::from([
+                (0, ("unlabeled",[0, 0, 0]).into()),
+                (1, ("outlier",[0, 0, 255]).into()),
+                (10, ("car",[245, 150, 100]).into()),
+                (11, ("bicycle",[245, 230, 100]).into()),
+                (13, ("bus",[250, 80, 100]).into()),
+                (15, ("motorcycle",[150, 60, 30]).into()),
+                (16, ("on-rails",[255, 0, 0]).into()),
+                (18, ("truck",[180, 30, 80]).into()),
+                (20, ("other-vehicle",[255, 0, 0]).into()),
+                (30, ("person",[30, 30, 255]).into()),
+                (31, ("bicyclist",[200, 40, 255]).into()),
+                (32, ("motorcyclist",[90, 30, 150]).into()),
+                (40, ("road",[255, 0, 255]).into()),
+                (44, ("parking",[255, 150, 255]).into()),
+                (48, ("sidewalk",[75, 0, 75]).into()),
+                (49, ("other-ground",[75, 0, 175]).into()),
+                (50, ("building",[0, 200, 255]).into()),
+                (51, ("fence",[50, 120, 255]).into()),
+                (52, ("other-structure",[0, 150, 255]).into()),
+                (60, ("lane-marking",[170, 255, 150]).into()),
+                (70, ("vegetation",[0, 175, 0]).into()),
+                (71, ("trunk",[0, 60, 135]).into()),
+                (72, ("terrain",[80, 240, 150]).into()),
+                (80, ("pole",[150, 240, 255]).into()),
+                (81, ("traffic-sign",[0, 0, 255]).into()),
+                (99, ("other-object",[255, 255, 50]).into()),
+                (252, ("moving-car",[245, 150, 100]).into()),
+                (256, ("moving-bicyclist",[255, 0, 0]).into()),
+                (253, ("moving-person",[200, 40, 255]).into()),
+                (254, ("moving-motorcyclist",[30, 30, 255]).into()),
+                (255, ("moving-on-rails",[90, 30, 150]).into()),
+                (257, ("moving-bus",[250, 80, 100]).into()),
+                (258, ("moving-truck",[180, 30, 80]).into()),
+                (259, ("moving-other-vehicle",[255, 0, 0]).into()),
             ]),
         }
     }
@@ -56,7 +70,7 @@ impl Default for Config {
 
 #[derive(Resource, Default)]
 pub struct PlayerConfig {
-    pub config: Option<Config>,
+    pub persistent: Config,
     pub actual_color_map: HashMap<u32, ColorRgbaF32>,
 }
 
@@ -70,26 +84,26 @@ impl PlayerConfig {
                 return;
             }
         };
-        self.config = Some(config);
-        self.update_color_map();
+        self.persistent = config;
+        self.update_label_map();
     }
-    pub fn save(&mut self) {
-        if let Some(config) = self.config.as_ref() {
-            if let Err(error) = confy::store(PlayerConfig::APP_NAME, None, config) {
-                eprintln!("{error}");
-            };
-        }
+    pub fn save(&self) {
+        if let Err(error) = confy::store(PlayerConfig::APP_NAME, None, &self.persistent) {
+            eprintln!("{error}");
+        };
     }
-    pub fn update_color_map(&mut self) {
-        if let Some(config) = &self.config {
-            let entries = config
-                .color_map
-                .iter()
-                .map(|(label, color)| (*label, PlayerConfig::convert_rgba_from_u8_to_f32(color)));
-            self.actual_color_map = entries.collect();
-        }
+    pub fn reset_label_map(&mut self) {
+        self.persistent.label_map = Self::default().persistent.label_map;
+        self.update_label_map();
     }
-    fn convert_rgba_from_u8_to_f32(color: &ColorRgbaU8) -> ColorRgbaF32 {
-        Color::rgba_u8(color[0], color[1], color[2], color[3]).as_linear_rgba_f32()
+    pub fn update_label_map(&mut self) {
+        let entries = self.persistent
+            .label_map
+            .iter()
+            .map(|(label, info)| (*label, PlayerConfig::convert_rgba_from_u8_to_f32(&info.color)));
+        self.actual_color_map = entries.collect();
+    }
+    fn convert_rgba_from_u8_to_f32(color: &ColorRgbU8) -> ColorRgbaF32 {
+        Color::rgb_u8(color[0], color[1], color[2]).as_linear_rgba_f32()
     }
 }

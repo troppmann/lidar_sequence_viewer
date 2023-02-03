@@ -15,7 +15,7 @@ impl Plugin for UiPlugin {
             .add_system(control_bar.before(handle_requests))
             .add_system(shortcut::handle_shortcuts.before(handle_requests))
             .add_system(menu_bar.before(handle_requests))
-            .add_system(settings::color::window.after(menu_bar).after(control_bar))
+            .add_system(settings::label::window.after(menu_bar).after(control_bar))
             .add_system(handle_requests);
     }
 }
@@ -90,7 +90,7 @@ fn menu_bar(
                     ui.close_menu();
                 }
                 ui.separator();
-                if ui.add(egui::Button::new("Color-Settings").wrap(false)).clicked() {
+                if ui.add(egui::Button::new("Label-Settings").wrap(false)).clicked() {
                     ui_state.color_settings_visible = !ui_state.color_settings_visible;
                     ui.close_menu();
                 }

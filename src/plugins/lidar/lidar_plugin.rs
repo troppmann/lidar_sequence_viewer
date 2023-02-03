@@ -138,6 +138,9 @@ impl PlayerState {
         self.start_time = None;
         self.free_memory_after_request();
     }
+    pub fn request_update(&mut self){
+        self.last_rendered_frame = usize::MAX;
+    }
     pub fn next_frame(&mut self) {
         self.request_frame(self.actual_frame + 1);
     }

@@ -23,7 +23,7 @@ Renders the lidar data from the KITTI Benchmark[1,2].
 - [x] Pick Sequence UI
 - [ ] Error PopUp or log
 - [x] Limit Memory Consumption
-- [ ] Color GUI Config
+- [x] Color GUI Config
 - [ ] Display information about hovered item under cursor
 - [x] Able to open seperate label folder
 ## References
