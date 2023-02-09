@@ -9,7 +9,7 @@ use futures_lite::future;
 
 use crate::{io::*, plugins::PlayerConfig};
 
-use super::instancing::*;
+use super::{instancing::*, inspector::detect_point_under_curser};
 
 pub struct LidarPlugin;
 
@@ -20,6 +20,7 @@ impl Plugin for LidarPlugin {
             .add_startup_system(init_sequence)
             .add_startup_system(load_config)
             .add_system(player)
+            .add_system(detect_point_under_curser.after(player))
             .add_system(buffer_next_frames)
             .add_system(handle_read_frames_task)
             .add_plugin(InstancingPlugin);
@@ -77,6 +78,9 @@ impl PlayerState {
     }
     pub fn get_frame(&self) -> usize {
         self.actual_frame
+    }
+    pub fn get_frame_content(&self) -> Option<&Frame> {
+        Some(self.sequence.as_ref()?.frames[self.actual_frame].as_ref()?)
     }
     pub fn get_buffer_frame(&self) -> usize {
         self.buffer_frame
@@ -178,7 +182,7 @@ impl PlayerState {
                     *load_state = LoadState::NotRequested;
             });
         }
-    } 
+    }
     fn free_memory_after_frame_update(&mut self){
         if let Some(sequence) = &mut self.sequence {
             let frame_to_delete = self.actual_frame.saturating_sub(PlayerState::MEMORY_RANGE);
