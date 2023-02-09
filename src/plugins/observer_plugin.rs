@@ -1,5 +1,6 @@
 use crate::math::smooth_damp;
 use bevy::{input::mouse::MouseMotion, prelude::*, window::CursorGrabMode};
+use bevy_egui::EguiContext;
 
 pub struct ObserverPlugin;
 
@@ -114,7 +115,11 @@ fn camera_control(
     mut mouse_events: EventReader<MouseMotion>,
     key_input: Res<Input<KeyCode>>,
     mut query: Query<(&mut Transform, &mut CameraController), With<Camera>>,
+    mut egui_ctx: ResMut<EguiContext>,
 ) {
+    if egui_ctx.ctx_mut().memory().focus().is_some() {
+        return;
+    }
     let delta_time = time.delta_seconds();
 
     // Handle mouse input
