@@ -14,18 +14,19 @@ Renders the lidar data from the KITTI Benchmark[1,2].
 - [x] Manipulate time with the UI
 - [x] KeyboardInput & UI Overhall
 - [x] Render labeled information
-- [ ] ToolTips
 - [x] PlaySpeed Manipulation
-- [ ] CameraSpeed Manipulation
-- [ ] Camera FOV changes
 - [x] Load files dynamically
 - [x] Change Sequences 
 - [x] Pick Sequence UI
-- [ ] Error PopUp or log
 - [x] Limit Memory Consumption
 - [x] Color GUI Config
-- [ ] Display information about hovered item under cursor
 - [x] Able to open seperate label folder
+- [ ] CameraSpeed Manipulation
+- [ ] ToolTips
+- [ ] Camera FOV changes
+- [ ] Display information about hovered item under cursor
+- [ ] Error PopUp or log
+- [ ] Add changeable object size
 ## References
 [1]&nbsp;&nbsp;&nbsp;Andreas Geiger, Philip Lenz, and Raquel Urtasun. Are we ready for Autonomous Driving? The KITTI Vision Benchmark Suite. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 2012
 
