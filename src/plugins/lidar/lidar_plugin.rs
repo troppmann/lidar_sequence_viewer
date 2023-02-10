@@ -9,7 +9,7 @@ use futures_lite::future;
 
 use crate::{io::*, plugins::PlayerConfig};
 
-use super::{instancing::*, inspector::detect_point_under_curser};
+use super::instancing::*;
 
 pub struct LidarPlugin;
 
@@ -20,7 +20,6 @@ impl Plugin for LidarPlugin {
             .add_startup_system(init_sequence)
             .add_startup_system(load_config)
             .add_system(player)
-            .add_system(detect_point_under_curser.after(player))
             .add_system(buffer_next_frames)
             .add_system(handle_read_frames_task)
             .add_plugin(InstancingPlugin);
@@ -238,7 +237,7 @@ fn player(
 }
 
 
-fn spawn_frame(commands: &mut Commands, frame: &Frame, mesh: Handle<Mesh>, color_map: &HashMap<u32, [f32;4]>) {
+fn spawn_frame(commands: &mut Commands, frame: &Frame, mesh: Handle<Mesh>, color_map: &HashMap<u16, [f32;4]>) {
     commands.spawn((
         mesh,
         SpatialBundle::VISIBLE_IDENTITY,
@@ -337,6 +336,6 @@ fn handle_read_frames_task(
     }
 }
 
-pub fn label_to_color(label: &Label, color_map: &HashMap<u32, [f32;4]>) -> [f32; 4]{
+pub fn label_to_color(label: &Label, color_map: &HashMap<u16, [f32;4]>) -> [f32; 4]{
     *color_map.get(&label.label.into()).unwrap_or(&[0.7, 0.4, 0.1, 1.0])
 }

@@ -16,7 +16,7 @@ pub struct LabelInfo {
 }
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
-    pub label_map: BTreeMap<u32, LabelInfo>,
+    pub label_map: BTreeMap<u16, LabelInfo>,
 }
 impl From<(&str, [u8;3])> for LabelInfo {
     fn from(value: (&str, [u8;3])) -> Self {
@@ -71,7 +71,7 @@ impl Default for Config {
 #[derive(Resource, Default)]
 pub struct PlayerConfig {
     pub persistent: Config,
-    pub actual_color_map: HashMap<u32, ColorRgbaF32>,
+    pub actual_color_map: HashMap<u16, ColorRgbaF32>,
 }
 
 impl PlayerConfig {

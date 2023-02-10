@@ -6,7 +6,7 @@ use bevy_egui::{*, egui::*};
 
 pub struct NewLabel {
     init: bool,
-    id: u32,
+    id: u16,
     info: LabelInfo,
 }
 impl Default for NewLabel{

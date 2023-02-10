@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_egui::{*, egui::{Vec2, Color32, RichText, Key, style::Margin, Stroke, epaint::Shadow, KeyboardShortcut, Modifiers}};
 
 use crate::plugins::lidar;
-use super::{request::*, shortcut, task, video_slider::*, image::*, settings};
+use super::{*, request::*, video_slider::*, image::*};
 
 pub struct UiPlugin;
 impl Plugin for UiPlugin {
@@ -11,11 +11,14 @@ impl Plugin for UiPlugin {
             .add_plugin(EguiPlugin)
             .add_startup_system(setup)
             .insert_resource(UiState::default())
+            .insert_resource(Inspector::default())
             .add_system(task::handle_load_folder_task)
             .add_system(control_bar.before(handle_requests))
             .add_system(shortcut::handle_shortcuts.before(handle_requests))
             .add_system(menu_bar.before(handle_requests))
             .add_system(settings::label::window.after(menu_bar).after(control_bar))
+            .add_system(Inspector::detect_point_under_curser.before(Inspector::draw))
+            .add_system(Inspector::draw.after(menu_bar).after(control_bar))
             .add_system(handle_requests);
     }
 }
@@ -48,6 +51,7 @@ fn menu_bar(
     mut egui_context: ResMut<EguiContext>,
     mut ui_state: ResMut<UiState>,
     mut player_state: ResMut<lidar::PlayerState>,
+    mut inspector: ResMut<Inspector>,
 ) {
     let ctx = egui_context.ctx_mut();
     let frame = egui::Frame {
@@ -70,6 +74,10 @@ fn menu_bar(
             ui.menu_button("View", |ui| {
                 if ui.add(egui::Button::new("Fullscreen").shortcut_text("F").wrap(false)).clicked() {
                     ui_state.fullscreen.request();   
+                    ui.close_menu();
+                }
+                if ui.add(egui::Button::new("Inspector").shortcut_text("I").wrap(false)).clicked() {
+                    inspector.visible = !inspector.visible;   
                     ui.close_menu();
                 }
             });

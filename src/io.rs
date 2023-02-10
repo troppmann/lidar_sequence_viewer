@@ -2,13 +2,13 @@ use std::{fs::{File, self, ReadDir}, io::{Read, self}, path::PathBuf};
 use bevy::prelude::Vec3;
 use nom::{IResult, multi::many0, sequence::tuple, number::complete::{le_f32, le_u16}};
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub struct Point{
     pub position: Vec3,
     pub remission: f32,
 }
 
-#[derive(Debug)]
+#[derive(Default, Debug, Copy, Clone)]
 pub struct Label{
     pub label: u16,
     pub instance_id: u16,
