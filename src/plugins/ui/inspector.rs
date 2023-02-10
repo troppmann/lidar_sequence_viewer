@@ -16,24 +16,47 @@ impl Inspector{
         config: Res<PlayerConfig>, 
     ){
         let ctx = egui_context.ctx_mut();
-        let point = inspector.point.clone();
+        //let point = inspector.point.clone();
         let label = inspector.label.clone();
-        egui::Window::new("Inspector-WIdow").open(&mut inspector.visible).title_bar(false).resizable(false).show(ctx, |ui| {
-            if let Some(point) = point {
-                ui.label(format!("X: {}, Y: {}, Z: {}", point.position.x, point.position.y, point.position.z));
-                match label {
-                    Some(label) => {
-                        let name = config.persistent.label_map.get(&label.label).map(|info| info.name.clone()).unwrap_or_default();
-                        ui.label(format!("{}({})", name, label.label));
-                        ui.label(format!("Instance ID: {}", label.instance_id));
-                    },
-                    None => {
-                        ui.label("-");
-                    },
+        egui::Window::new("Inspector").open(&mut inspector.visible).resizable(true).show(ctx, |ui| {
+            egui::Grid::new("InspectorGird").num_columns(2).min_col_width(100.0).show(ui, |ui| {                
+                //fields
+                let missing_value = String::from("");
+              //let mut x = 0.0;
+              //let mut y = 0.0;
+              //let mut z = 0.0;
+                let mut label_name = missing_value.clone();
+                let mut label_id = missing_value.clone();
+                let mut label_instance_id = missing_value;
+
+              //if let Some(point) = point {
+              //    x = point.position.x;
+              //    y = point.position.y;
+              //    z = point.position.z;
+              //}
+                if let Some(label) = label {
+                    label_name = config.persistent.label_map.get(&label.label).map(|info| info.name.clone()).unwrap_or_default();
+                    label_id = label.label.to_string();
+                    label_instance_id = label.instance_id.to_string();
                 }
-            } else {
-                ui.label("-");
-            }
+
+              //ui.label("Position");
+              //ui.horizontal(|ui| {
+              //    ui.label(RichText::new(format!("{:+04.0}", x)).monospace());
+              //    ui.label(RichText::new(format!("{:+04.0}", y)).monospace());
+              //    ui.label(RichText::new(format!("{:+04.0}", z)).monospace());
+              //});
+              //ui.end_row();
+                ui.label("Label:");
+                ui.label(label_name);
+                ui.end_row();
+                ui.label("ID:");
+                ui.label(label_id);
+                ui.end_row();
+                ui.label("Instance ID:");
+                ui.label(label_instance_id);
+                ui.end_row();
+            });
         });
     }
     pub fn detect_point_under_curser(
@@ -43,24 +66,20 @@ impl Inspector{
         mut inspector: ResMut<Self>
     ) 
     {
-        //Get access to actual frame
+        if !inspector.visible{
+            return;
+        }
         let Some(frame) = player.get_frame_content() else {
-            println!("No Frame");
             return;
         };
-        //get mouse position
         let Some(window) = windows.get_primary() else {
-            println!("No Window");
             return;
         };
         let Some(mouse_position) = window.cursor_position() else {
-            println!("No Mouse position");
             return;
         };
-        //get mouse world position and screen direction
         let (camera, transform) = cameras.single();
         let Some(ray) = camera.viewport_to_world(transform, mouse_position) else {
-            println!("No Ray");
             return;
         };
 
