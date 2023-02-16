@@ -21,10 +21,10 @@ Renders the lidar data from the KITTI Benchmark[1,2].
 - [x] Limit Memory Consumption
 - [x] Color GUI Config
 - [x] Able to open seperate label folder
+- [x] Display information about hovered item under cursor
 - [ ] CameraSpeed Manipulation
 - [ ] ToolTips
 - [ ] Camera FOV changes
-- [ ] Display information about hovered item under cursor
 - [ ] Error PopUp or log
 - [ ] Add changeable object size
 - [ ] Changeable Background Color

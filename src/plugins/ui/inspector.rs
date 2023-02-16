@@ -1,5 +1,7 @@
+use std::iter::repeat;
+
 use bevy::prelude::*;
-use bevy_egui::*;
+use bevy_egui::{*, egui::RichText};
 use crate::{io::{Point, Label}, plugins::{PlayerConfig, lidar::PlayerState}};
 
 #[derive(Resource, Default)]
@@ -16,37 +18,35 @@ impl Inspector{
         config: Res<PlayerConfig>, 
     ){
         let ctx = egui_context.ctx_mut();
-        //let point = inspector.point.clone();
+        let point = inspector.point.clone();
         let label = inspector.label.clone();
         egui::Window::new("Inspector").open(&mut inspector.visible).resizable(true).show(ctx, |ui| {
             egui::Grid::new("InspectorGird").num_columns(2).min_col_width(100.0).show(ui, |ui| {                
                 //fields
                 let missing_value = String::from("");
-              //let mut x = 0.0;
-              //let mut y = 0.0;
-              //let mut z = 0.0;
                 let mut label_name = missing_value.clone();
                 let mut label_id = missing_value.clone();
                 let mut label_instance_id = missing_value;
 
-              //if let Some(point) = point {
-              //    x = point.position.x;
-              //    y = point.position.y;
-              //    z = point.position.z;
-              //}
                 if let Some(label) = label {
                     label_name = config.persistent.label_map.get(&label.label).map(|info| info.name.clone()).unwrap_or_default();
                     label_id = label.label.to_string();
                     label_instance_id = label.instance_id.to_string();
                 }
 
-              //ui.label("Position");
-              //ui.horizontal(|ui| {
-              //    ui.label(RichText::new(format!("{:+04.0}", x)).monospace());
-              //    ui.label(RichText::new(format!("{:+04.0}", y)).monospace());
-              //    ui.label(RichText::new(format!("{:+04.0}", z)).monospace());
-              //});
-              //ui.end_row();
+                ui.label("Position");
+                ui.horizontal(|ui| {
+                    if let Some(point) = point {
+                        ui.label(RichText::new(format_fixed_digits(point.position.x)).monospace());
+                        ui.label(RichText::new(format_fixed_digits(point.position.y)).monospace());
+                        ui.label(RichText::new(format_fixed_digits(point.position.z)).monospace());
+                    } else {
+                        for _ in 0..3 {
+                            ui.label(RichText::new("        ").monospace());
+                        }
+                    }
+                });
+                ui.end_row();
                 ui.label("Label:");
                 ui.label(label_name);
                 ui.end_row();
@@ -113,4 +113,8 @@ impl Inspector{
 
     }
 
+}
+
+fn format_fixed_digits(number: f32) -> String {
+    format!("{:+.8}", number).chars().take(8).collect()
 }
