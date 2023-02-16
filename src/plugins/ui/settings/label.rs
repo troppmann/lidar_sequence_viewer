@@ -25,14 +25,16 @@ pub fn window(
     let ctx = egui_context.ctx_mut();
     egui::Window::new("Label-Settings").open(&mut ui_state.color_settings_visible).resizable(true).vscroll(true).show(ctx, |ui| {
         let mut request_color_update = false;
+        let mut request_save = false;
         let mut indexes_to_remove = Vec::new();
         let remove_button_color = Color32::from_rgb(60, 60, 60);
         egui::Grid::new("Test-Grid").striped(true).num_columns(3).show(ui, |ui| {
             for (label, info) in config.persistent.label_map.iter_mut() {
                 ui.horizontal(|ui| {
-                    if ui.colored_label(remove_button_color, "✖").clicked() {
+                    if ui.button(RichText::new("✖").color(remove_button_color)).clicked() {
                         indexes_to_remove.push(*label);
                         request_color_update = true;
+                        request_save = true;
                     }
                     ui.with_layout(egui::Layout::centered_and_justified(egui::Direction::TopDown), |ui| {
                         ui.label(label.to_string());
@@ -40,8 +42,11 @@ pub fn window(
                 });
                 if ui.color_edit_button_srgb(&mut info.color).changed() {
                     request_color_update = true;
+                    request_save = true;
                 }
-                ui.text_edit_singleline(&mut info.name);
+                if ui.text_edit_singleline(&mut info.name).changed() {
+                    request_save = true;
+                }
                 ui.end_row();
             }
             //TODO move to startup system
@@ -55,29 +60,28 @@ pub fn window(
             ui.horizontal(|ui| {
                 if ui.button("➕").clicked() {
                     config.persistent.label_map.insert(new_label.id, new_label.info.clone());
-                    request_color_update = true;
                     new_label.id = match config.persistent.label_map.last_key_value(){
                         Some((key, _)) => *key + 1,
                         None => 0,
                     };
+                    request_color_update = true;
+                    request_save = true;
                 }
                 ui.add(egui::widgets::DragValue::new(&mut new_label.id));
             });
             if ui.color_edit_button_srgb(&mut new_label.info.color).changed() {
                 request_color_update = true;
+                request_save = true;
             }
             ui.text_edit_singleline(&mut new_label.info.name);
             ui.end_row();
         });
         ui.horizontal(|ui| {
-            //TODO: Remove save button make it auto-save
-            if ui.button("Save").clicked() {
-                config.save();
-            }
             //TODO: Change to reset icon with tooltip
             if ui.button("Reset").clicked() {
                 config.reset_label_map();
                 player.request_update();
+                request_save = true;
             }
         });
         for key in indexes_to_remove{
@@ -86,6 +90,9 @@ pub fn window(
         if request_color_update {
             config.update_label_map();
             player.request_update();
+        }
+        if request_save {
+            config.save()
         }
     });
 }
