@@ -1,5 +1,3 @@
-use std::iter::repeat;
-
 use bevy::prelude::*;
 use bevy_egui::{*, egui::RichText};
 use crate::{io::{Point, Label}, plugins::{PlayerConfig, lidar::PlayerState}};

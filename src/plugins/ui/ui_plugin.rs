@@ -161,24 +161,30 @@ fn control_bar(
         ui.horizontal(|ui| {
             let button_size = Vec2::new(20.0, 20.0);
             ui.add_space(15.0);
-            if ui.add(egui::ImageButton::new(previous_frame_button, button_size).frame(false)).clicked() || ui.input().key_pressed(Key::ArrowLeft) {
+            if ui.add(egui::ImageButton::new(previous_frame_button, button_size).frame(false))
+                .on_hover_text("Previous Frame").clicked() || ui.input().key_pressed(Key::ArrowLeft) {
                 player.previous_frame();
             }
-            if ui.add(egui::ImageButton::new(play_button, button_size).frame(false)).clicked() {
+            if ui.add(egui::ImageButton::new(play_button, button_size).frame(false))
+                .on_hover_text(if player.is_paused() {"Play"} else {"Pause"}).clicked() {
                 player.toggle_play();
             }
-            if ui.add(egui::ImageButton::new(next_frame_button, button_size).frame(false)).clicked() {
+            if ui.add(egui::ImageButton::new(next_frame_button, button_size).frame(false))
+                .on_hover_text("Next Frame").clicked() {
                 player.next_frame();
             }
             ui.add_sized(bevy_egui::egui::Vec2::new(40.0,20.0), 
-            egui::Label::new(RichText::new(format!("{} / {}", frame, max_frame)).color(Color32::WHITE).text_style(egui::TextStyle::Button)));
+            egui::Label::new(RichText::new(format!("{} / {}", frame, max_frame)).color(Color32::WHITE).text_style(egui::TextStyle::Button)))
+                .on_hover_text("Frame Count");
             let padding = 80.0;
             ui.add_space(ui.available_width() - padding);
             let mut time_scale = player.get_time_scale();
-            if ui.add(egui::widgets::DragValue::new(&mut time_scale).clamp_range(0.0..=1000.0).speed(0.1).suffix("x")).changed() {
+            if ui.add(egui::widgets::DragValue::new(&mut time_scale).clamp_range(0.0..=1000.0).speed(0.1).suffix("x"))
+                .on_hover_text("Time Scale").changed() {
                 player.set_time_scale(time_scale);
             }
-            if ui.add(egui::ImageButton::new(fullscreen_button, button_size).frame(false)).clicked() {
+            if ui.add(egui::ImageButton::new(fullscreen_button, button_size).frame(false))
+                .on_hover_text(if ui_state.fullscreen.get_state() {"Leave Fullscreen"} else {"Enter Fullscreen"}).clicked() {
                 ui_state.fullscreen.request();
             }
         });
