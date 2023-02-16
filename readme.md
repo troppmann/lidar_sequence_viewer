@@ -23,12 +23,12 @@ Renders the lidar data from the KITTI Benchmark[1,2].
 - [x] Able to open seperate label folder
 - [x] Display information about hovered item under cursor
 - [x] ToolTips
+- [x] Changeable Background Color
+- [x] Changeable Default Color
 - [ ] CameraSpeed Manipulation
 - [ ] Camera FOV changes
 - [ ] Error PopUp or log
 - [ ] Add changeable object size
-- [ ] Changeable Background Color
-- [ ] Changeable Default Color
 ## References
 [1]&nbsp;&nbsp;&nbsp;Andreas Geiger, Philip Lenz, and Raquel Urtasun. Are we ready for Autonomous Driving? The KITTI Vision Benchmark Suite. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 2012
 

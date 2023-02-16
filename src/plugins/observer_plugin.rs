@@ -6,7 +6,7 @@ pub struct ObserverPlugin;
 
 impl Plugin for ObserverPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(ClearColor(Color::rgb_u8(0, 41, 61)))
+        app.insert_resource(ClearColor(Color::rgb_u8(0, 21, 41)))
             .add_startup_system(setup_camera)
             .add_system(camera_control);
     }

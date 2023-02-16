@@ -29,6 +29,13 @@ pub fn window(
         let mut indexes_to_remove = Vec::new();
         let remove_button_color = Color32::from_rgb(60, 60, 60);
         egui::Grid::new("Test-Grid").striped(true).num_columns(3).show(ui, |ui| {
+            ui.label("");
+            if ui.color_edit_button_srgb(&mut config.persistent.default_color).changed() {
+                request_color_update = true;
+                request_save = true;
+            }
+            ui.label("Default");
+            ui.end_row();
             for (label, info) in config.persistent.label_map.iter_mut() {
                 ui.horizontal(|ui| {
                     if ui.button(RichText::new("✖").color(remove_button_color)).clicked() {

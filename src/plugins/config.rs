@@ -17,6 +17,12 @@ pub struct LabelInfo {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
     pub label_map: BTreeMap<u16, LabelInfo>,
+    pub default_color: [u8;3],
+    pub background_color: [u8;3],
+    pub file_path: Option<String>,
+    pub camera_fov: f32,
+    pub camera_speed: f32,
+    pub object_size: f32,
 }
 impl From<(&str, [u8;3])> for LabelInfo {
     fn from(value: (&str, [u8;3])) -> Self {
@@ -64,6 +70,12 @@ impl Default for Config {
                 (258, ("moving-truck",[180, 30, 80]).into()),
                 (259, ("moving-other-vehicle",[255, 0, 0]).into()),
             ]),
+            default_color: [180, 100, 25],
+            background_color: [0, 41, 61],
+            file_path: None,
+            camera_fov: 90.0,
+            camera_speed: 10.0,
+            object_size: 0.004,
         }
     }
 }
@@ -72,6 +84,7 @@ impl Default for Config {
 pub struct PlayerConfig {
     pub persistent: Config,
     pub actual_color_map: HashMap<u16, ColorRgbaF32>,
+    pub default_color: ColorRgbaF32,
 }
 
 impl PlayerConfig {
@@ -102,6 +115,7 @@ impl PlayerConfig {
             .iter()
             .map(|(label, info)| (*label, PlayerConfig::convert_rgba_from_u8_to_f32(&info.color)));
         self.actual_color_map = entries.collect();
+        self.default_color = PlayerConfig::convert_rgba_from_u8_to_f32(&self.persistent.default_color);
     }
     fn convert_rgba_from_u8_to_f32(color: &ColorRgbU8) -> ColorRgbaF32 {
         Color::rgb_u8(color[0], color[1], color[2]).as_linear_rgba_f32()

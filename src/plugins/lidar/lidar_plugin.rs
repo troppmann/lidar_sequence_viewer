@@ -7,7 +7,7 @@ use bevy::{
 };
 use futures_lite::future;
 
-use crate::{io::*, plugins::PlayerConfig};
+use crate::{io::*, plugins::{PlayerConfig, Config}};
 
 use super::instancing::*;
 
@@ -202,9 +202,14 @@ fn init_sequence(mut state: ResMut<PlayerState>, mut meshes: ResMut<Assets<Mesh>
     }    
 }
 
-fn load_config(mut config: ResMut<PlayerConfig>){
+fn load_config(
+    mut config: ResMut<PlayerConfig>,
+    mut clear_color: ResMut<ClearColor>,
+){
     config.load();
     println!("{:?}", confy::get_configuration_file_path("lidar_viewer", None));
+    let background_color = config.persistent.background_color;
+    clear_color.0 = Color::rgb_u8(background_color[0], background_color[1], background_color[2]);
 }
 
 fn player(
@@ -225,7 +230,7 @@ fn player(
             if let Some(frame) = &sequence.frames[state.actual_frame] {
                 //change frame content
                 query.for_each(|entity| commands.entity(entity).despawn());
-                spawn_frame(&mut commands, frame, state.mesh.as_ref().unwrap().clone(), &config.actual_color_map);
+                spawn_frame(&mut commands, &config, frame, state.mesh.as_ref().unwrap().clone());
                 state.last_rendered_frame = state.actual_frame;
             } else {
                 state.wait_for_buffering = true;
@@ -237,7 +242,12 @@ fn player(
 }
 
 
-fn spawn_frame(commands: &mut Commands, frame: &Frame, mesh: Handle<Mesh>, color_map: &HashMap<u16, [f32;4]>) {
+fn spawn_frame(
+        commands: &mut Commands,
+        config: &PlayerConfig,
+        frame: &Frame, 
+        mesh: Handle<Mesh>, 
+    ) {
     commands.spawn((
         mesh,
         SpatialBundle::VISIBLE_IDENTITY,
@@ -248,16 +258,15 @@ fn spawn_frame(commands: &mut Commands, frame: &Frame, mesh: Handle<Mesh>, color
                 .map(|(point, label)| InstanceData {
                     position: point.position,
                     scale: 1.0,
-                    color: label_to_color(label, &color_map),
+                    color: label_to_color(label, &config.actual_color_map, &config.default_color),
                 })
                 .collect()
             }else {
-                let default_color = Color::rgb_u8(247, 127, 0).as_linear_rgba_f32();
                 frame.points.iter()
                 .map(|point| InstanceData {
                     position: point.position,
                     scale: 1.0,
-                    color: default_color,
+                    color: config.default_color,
                 })
                 .collect()
             }
@@ -336,6 +345,6 @@ fn handle_read_frames_task(
     }
 }
 
-pub fn label_to_color(label: &Label, color_map: &HashMap<u16, [f32;4]>) -> [f32; 4]{
-    *color_map.get(&label.label.into()).unwrap_or(&[0.7, 0.4, 0.1, 1.0])
+pub fn label_to_color(label: &Label, color_map: &HashMap<u16, [f32;4]>, default_color: &[f32;4]) -> [f32; 4]{
+    *color_map.get(&label.label.into()).unwrap_or(default_color)
 }

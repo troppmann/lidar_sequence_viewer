@@ -17,6 +17,7 @@ impl Plugin for UiPlugin {
             .add_system(shortcut::handle_shortcuts.before(handle_requests))
             .add_system(menu_bar.before(handle_requests))
             .add_system(settings::label::window.after(menu_bar).after(control_bar))
+            .add_system(settings::general::window.after(menu_bar).after(control_bar))
             .add_system(Inspector::detect_point_under_curser.before(Inspector::draw))
             .add_system(Inspector::draw.after(menu_bar).after(control_bar))
             .add_system(handle_requests);
@@ -46,6 +47,7 @@ pub struct UiState{
     pub label_folder_dialog: DialogRequest,
     pub fullscreen: ToggleRequest,
     pub color_settings_visible: bool,
+    pub general_settings_visible: bool,
 }
 fn menu_bar(
     mut egui_context: ResMut<EguiContext>,
@@ -64,6 +66,10 @@ fn menu_bar(
             ui.menu_button("File", |ui| {
                 if ui.add_enabled(!ui_state.folder_dialog.is_open(), egui::Button::new("Open Sequence Folder...").shortcut_text("O").wrap(false)).clicked() {
                     ui_state.folder_dialog.request(); 
+                    ui.close_menu();
+                }
+                if ui.add(egui::Button::new("General-Settings").wrap(false)).clicked() {
+                    ui_state.general_settings_visible = !ui_state.general_settings_visible;
                     ui.close_menu();
                 }
                 ui.separator();
