@@ -13,13 +13,13 @@ use bevy::{
         mesh::{GpuBufferInfo, MeshVertexBufferLayout},
         render_asset::RenderAssets,
         render_phase::{
-            AddRenderCommand, DrawFunctions, EntityRenderCommand, RenderCommandResult, RenderPhase,
-            SetItemPipeline, TrackedRenderPass,
+            AddRenderCommand, DrawFunctions,  RenderCommandResult, RenderPhase,
+            SetItemPipeline, TrackedRenderPass, RenderCommand, PhaseItem,
         },
         render_resource::*,
         renderer::RenderDevice,
         view::{ExtractedView},
-        RenderApp, RenderStage,
+        RenderApp, RenderSet,
     },
 };
 use bytemuck::{Pod, Zeroable};
@@ -31,9 +31,10 @@ pub struct InstanceMaterialData(pub Vec<InstanceData>);
 impl ExtractComponent for InstanceMaterialData {
     type Query = &'static InstanceMaterialData;
     type Filter = ();
+    type Out = Self;
 
-    fn extract_component(item: QueryItem<'_, Self::Query>) -> Self {
-        InstanceMaterialData(item.0.clone())
+    fn extract_component(item: QueryItem<'_, Self::Query>) -> Option<Self> {
+        Some(InstanceMaterialData(item.0.clone()))
     }
 }
 
@@ -46,8 +47,8 @@ impl Plugin for InstancingPlugin {
             .add_render_command::<Transparent3d, DrawCustom>()
             .init_resource::<CustomPipeline>()
             .init_resource::<SpecializedMeshPipelines<CustomPipeline>>()
-            .add_system_to_stage(RenderStage::Queue, queue_custom)
-            .add_system_to_stage(RenderStage::Prepare, prepare_instance_buffers);
+            .add_system(queue_custom.in_set(RenderSet::Queue))
+            .add_system(prepare_instance_buffers.in_set(RenderSet::Prepare));
     }
 }
 
@@ -74,7 +75,7 @@ fn queue_custom(
         .get_id::<DrawCustom>()
         .unwrap();
 
-    let msaa_key = MeshPipelineKey::from_msaa_samples(msaa.samples);
+    let msaa_key = MeshPipelineKey::from_msaa_samples(msaa.samples());
 
     for (view, mut transparent_phase) in &mut views {
         let view_key = msaa_key | MeshPipelineKey::from_hdr(view.hdr);
@@ -168,11 +169,6 @@ impl SpecializedMeshPipeline for CustomPipeline {
             ],
         });
         descriptor.fragment.as_mut().unwrap().shader = self.shader.clone();
-        descriptor.layout = Some(vec![
-            self.mesh_pipeline.view_layout.clone(),
-            self.mesh_pipeline.mesh_layout.clone(),
-        ]);
-
         Ok(descriptor)
     }
 }
@@ -186,22 +182,19 @@ type DrawCustom = (
 
 pub struct DrawMeshInstanced;
 
-impl EntityRenderCommand for DrawMeshInstanced {
-    type Param = (
-        SRes<RenderAssets<Mesh>>,
-        SQuery<Read<Handle<Mesh>>>,
-        SQuery<Read<InstanceBuffer>>,
-    );
+impl<P: PhaseItem> RenderCommand<P> for DrawMeshInstanced {
+    type Param = SRes<RenderAssets<Mesh>>;
+    type ViewWorldQuery = ();
+    type ItemWorldQuery = (Read<Handle<Mesh>>, Read<InstanceBuffer>);
+
     #[inline]
     fn render<'w>(
-        _view: Entity,
-        item: Entity,
-        (meshes, mesh_query, instance_buffer_query): SystemParamItem<'w, '_, Self::Param>,
+        _item: &P,
+        _view: (),
+        (mesh_handle, instance_buffer): (&'w Handle<Mesh>, &'w InstanceBuffer),
+        meshes: SystemParamItem<'w, '_, Self::Param>,
         pass: &mut TrackedRenderPass<'w>,
     ) -> RenderCommandResult {
-        let mesh_handle = mesh_query.get(item).unwrap();
-        let instance_buffer = instance_buffer_query.get_inner(item).unwrap();
-
         let gpu_mesh = match meshes.into_inner().get(mesh_handle) {
             Some(gpu_mesh) => gpu_mesh,
             None => return RenderCommandResult::Failure,
@@ -225,4 +218,4 @@ impl EntityRenderCommand for DrawMeshInstanced {
         }
         RenderCommandResult::Success
     }
-}
+} 

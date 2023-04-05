@@ -7,7 +7,7 @@ use bevy::{
 };
 use futures_lite::future;
 
-use crate::{io::*, plugins::{PlayerConfig, Config}};
+use crate::{io::{*, self}, plugins::PlayerConfig};
 
 use super::instancing::*;
 
@@ -250,7 +250,7 @@ fn spawn_frame(
     ) {
     commands.spawn((
         mesh,
-        SpatialBundle::VISIBLE_IDENTITY,
+        SpatialBundle::default(),
         InstanceMaterialData(
             if frame.labels.is_some(){
                 frame.points.iter()
@@ -345,6 +345,6 @@ fn handle_read_frames_task(
     }
 }
 
-pub fn label_to_color(label: &Label, color_map: &HashMap<u16, [f32;4]>, default_color: &[f32;4]) -> [f32; 4]{
+pub fn label_to_color(label: &io::Label, color_map: &HashMap<u16, [f32;4]>, default_color: &[f32;4]) -> [f32; 4]{
     *color_map.get(&label.label.into()).unwrap_or(default_color)
 }

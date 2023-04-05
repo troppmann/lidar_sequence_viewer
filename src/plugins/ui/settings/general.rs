@@ -1,11 +1,11 @@
 use bevy::prelude::*;
-use bevy_egui::{*, egui::*};
+use bevy_egui::*;
 
 use super::super::ui_plugin::UiState;
 use crate::plugins::{config::PlayerConfig, lidar::PlayerState};
 
 pub fn window(
-    mut egui_context: ResMut<EguiContext>,
+    mut egui_context: EguiContexts,
     mut ui_state: ResMut<UiState>,
     mut config: ResMut<PlayerConfig>,
     mut player: ResMut<PlayerState>,

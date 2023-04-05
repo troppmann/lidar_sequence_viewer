@@ -12,12 +12,12 @@ impl Plugin for FpsWindowTitlePlugin {
     }
 }
 
-pub fn update_window_title(diagnostics: Res<Diagnostics>, mut windows: ResMut<Windows>) {
-    let window = windows.primary_mut();
+pub fn update_window_title(diagnostics: Res<Diagnostics>, mut query_window: Query<&mut Window>) {
+    let mut window = query_window.single_mut();
     if let Some(fps) = diagnostics
         .get(FrameTimeDiagnosticsPlugin::FPS)
         .and_then(|fps| fps.average())
     {
-        window.set_title(format!("Lidar Viewer FPS {:.2}", fps))
+        window.title = format!("Lidar Viewer FPS {:.2}", fps);
     }
 }

@@ -1,6 +1,6 @@
 use crate::math::smooth_damp;
 use bevy::{input::mouse::MouseMotion, prelude::*, window::CursorGrabMode};
-use bevy_egui::EguiContext;
+use bevy_egui::EguiContexts;
 
 pub struct ObserverPlugin;
 
@@ -110,14 +110,14 @@ impl DampedFloat {
 
 fn camera_control(
     time: Res<Time>,
-    mut windows: ResMut<Windows>,
+    mut query_window: Query<&mut Window>,
     btn: Res<Input<MouseButton>>,
     mut mouse_events: EventReader<MouseMotion>,
     key_input: Res<Input<KeyCode>>,
     mut query: Query<(&mut Transform, &mut CameraController), With<Camera>>,
-    mut egui_ctx: ResMut<EguiContext>,
+    mut egui_ctx: EguiContexts,
 ) {
-    if egui_ctx.ctx_mut().memory().focus().is_some() {
+    if egui_ctx.ctx_mut().memory(|reader| reader.focus().is_some()) {
         return;
     }
     let delta_time = time.delta_seconds();
@@ -132,7 +132,7 @@ fn camera_control(
         if !options.enabled {
             continue;
         }
-
+        let mut window = query_window.single_mut();
         // Handle key input
         let mut axis_input = Vec3::ZERO;
         if key_input.pressed(options.key_forward) {
@@ -175,13 +175,11 @@ fn camera_control(
             + options.velocity.y * delta_time * Vec3::Y
             + options.velocity.z * delta_time * forward;
 
-        let Some(window )= windows.get_primary_mut() else {
-            return;
-        };
+        
         // Apply look update
         if btn.just_pressed(MouseButton::Right) {
-            window.set_cursor_grab_mode(CursorGrabMode::Confined);
-            window.set_cursor_visibility(false);
+            window.cursor.grab_mode = CursorGrabMode::Confined;
+            window.cursor.visible = false;
             options.old_cursor_position = window.cursor_position();
         }
 
@@ -201,11 +199,9 @@ fn camera_control(
             Quat::from_euler(EulerRot::ZYX, 0.0, options.yaw.actual, options.pitch.actual);
 
         if btn.just_released(MouseButton::Right) {
-            window.set_cursor_grab_mode(CursorGrabMode::None);
-            window.set_cursor_visibility(true);
-            if let Some(pos) = options.old_cursor_position {
-                window.set_cursor_position(pos);
-            }
+            window.cursor.grab_mode = CursorGrabMode::None;
+            window.cursor.visible = true;
+            window.set_cursor_position(options.old_cursor_position);
         }
     }
 }

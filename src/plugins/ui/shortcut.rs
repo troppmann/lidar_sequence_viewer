@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_egui::EguiContext;
+use bevy_egui::EguiContexts;
 use crate::plugins::lidar::*;
 use super::{ui_plugin::UiState, inspector::Inspector};
 
@@ -9,9 +9,9 @@ pub fn handle_shortcuts(
     mut player: ResMut<PlayerState>, 
     mut ui_state: ResMut<UiState>,
     mut inspector: ResMut<Inspector>,
-    mut egui_ctx: ResMut<EguiContext>,
+    mut egui_ctx: EguiContexts,
 ){
-    if egui_ctx.ctx_mut().memory().focus().is_some() {
+    if egui_ctx.ctx_mut().memory(|memory| memory.focus().is_some()) {
         return;
     }
     if input.just_pressed(KeyCode::F) || input.just_pressed(KeyCode::F12) {

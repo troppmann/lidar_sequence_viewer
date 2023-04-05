@@ -16,8 +16,8 @@ fn main() {
         .run();
 }
 
-fn setup_window(mut windows: ResMut<Windows>){
-    let window = windows.primary_mut();
-    window.set_title("Lidar Viewer".to_string());
-    window.center_window(MonitorSelection::Current);
+fn setup_window(mut query_window: Query<&mut Window>){
+    let mut window = query_window.single_mut();
+    window.title = "Lidar Viewer".to_string();
+    window.position = WindowPosition::Centered(MonitorSelection::Current);
 }

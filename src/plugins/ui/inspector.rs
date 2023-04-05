@@ -11,7 +11,7 @@ pub struct Inspector{
 
 impl Inspector{   
     pub fn draw(
-        mut egui_context: ResMut<EguiContext>,
+        mut egui_context: EguiContexts,
         mut inspector: ResMut<Self>,
         config: Res<PlayerConfig>, 
     ){
@@ -60,7 +60,7 @@ impl Inspector{
     pub fn detect_point_under_curser(
         player: Res<PlayerState>,
         cameras: Query<(&Camera, &GlobalTransform)>,
-        windows: Res<Windows>,
+        mut query_window: Query<&mut Window>,
         mut inspector: ResMut<Self>
     ) 
     {
@@ -70,9 +70,7 @@ impl Inspector{
         let Some(frame) = player.get_frame_content() else {
             return;
         };
-        let Some(window) = windows.get_primary() else {
-            return;
-        };
+        let window = query_window.single_mut();
         let Some(mouse_position) = window.cursor_position() else {
             return;
         };

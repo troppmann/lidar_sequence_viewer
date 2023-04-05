@@ -3,8 +3,13 @@
 
 // Modified Slider from egui
 
+use bevy_egui::egui::{
+    egui_assert,
+    emath::{self, *},
+    epaint, Color32, DragValue, FontId, Key, Label, Response, RichText, Sense, SliderOrientation,
+    TextStyle, Ui, Widget, WidgetInfo,
+};
 use std::{f64::INFINITY, ops::RangeInclusive};
-use bevy_egui::egui::{Color32, SliderOrientation, emath::{self, *}, Ui, Response, Sense, Key, epaint, DragValue, TextStyle, RichText, Label, Widget, WidgetInfo, egui_assert, FontId};
 
 // ----------------------------------------------------------------------------
 
@@ -39,8 +44,6 @@ struct SliderSpec {
     /// Default: INFINITY.
     largest_finite: f64,
 }
-
-
 
 /// Control a number with a slider.
 ///
@@ -87,7 +90,7 @@ pub struct VideoSlider<'a> {
 
 impl<'a> VideoSlider<'a> {
     /// Creates a new horizontal slider.
-    pub fn new<Num:emath::Numeric>(value: &'a mut Num, range: RangeInclusive<Num>) -> Self {
+    pub fn new<Num: emath::Numeric>(value: &'a mut Num, range: RangeInclusive<Num>) -> Self {
         let range_f64 = range.start().to_f64()..=range.end().to_f64();
         let slf = Self::from_get_set(range_f64, move |v: Option<f64>| {
             if let Some(v) = v {
@@ -164,20 +167,19 @@ impl<'a> VideoSlider<'a> {
     }
 
     pub fn slider_color(mut self, slider_color: Color32) -> Self {
-        self.slider_color= Some(slider_color);
+        self.slider_color = Some(slider_color);
         self
     }
 
     pub fn buffer_hint_color(mut self, buffer_hint_color: Color32) -> Self {
-        self.buffer_hint_color= Some(buffer_hint_color);
+        self.buffer_hint_color = Some(buffer_hint_color);
         self
     }
 
-    pub fn buffer_value<Num:emath::Numeric>(mut self, value: &Num)-> Self{
+    pub fn buffer_value<Num: emath::Numeric>(mut self, value: &Num) -> Self {
         self.buffer_value = value.to_f64();
         self
     }
-
 
     /// Vertical or horizontal slider? The default is horizontal.
     pub fn orientation(mut self, orientation: SliderOrientation) -> Self {
@@ -363,7 +365,7 @@ impl<'a> VideoSlider<'a> {
         if let Some(pointer_position_2d) = response.interact_pointer_pos() {
             let position = self.pointer_position(pointer_position_2d);
             let new_value = if self.smart_aim {
-                let aim_radius = ui.input().aim_radius();
+                let aim_radius = ui.input(|input| input.aim_radius());
                 emath::smart_aim::best_in_range_f64(
                     self.value_from_position(position - aim_radius, position_range.clone()),
                     self.value_from_position(position + aim_radius, position_range.clone()),
@@ -387,7 +389,8 @@ impl<'a> VideoSlider<'a> {
                 fill: Color32::from_rgb(60, 60, 60),
                 stroke: Default::default(),
             });
-            let position_buffer = self.position_from_value(self.buffer_value, position_range.clone());
+            let position_buffer =
+                self.position_from_value(self.buffer_value, position_range.clone());
             let buffer_rect = self.slider_rect(position_buffer, &rail_rect);
             ui.painter().add(epaint::RectShape {
                 rect: buffer_rect,
@@ -404,7 +407,13 @@ impl<'a> VideoSlider<'a> {
             });
             if response.dragged() {
                 let tooltip_rect = rail_rect;
-                ui.painter().text(Pos2::new(position_1d,tooltip_rect.top() - 20.0), Align2::CENTER_CENTER, value.to_string(), FontId::proportional(20.0), Color32::WHITE);
+                ui.painter().text(
+                    Pos2::new(position_1d, tooltip_rect.top() - 20.0),
+                    Align2::CENTER_CENTER,
+                    value.to_string(),
+                    FontId::proportional(20.0),
+                    Color32::WHITE,
+                );
             }
         }
     }
@@ -435,20 +444,16 @@ impl<'a> VideoSlider<'a> {
 
     fn position_range(&self, rect: &Rect) -> RangeInclusive<f32> {
         match self.orientation {
-            SliderOrientation::Horizontal => {
-                (rect.left())..=(rect.right())
-            }
-            SliderOrientation::Vertical => {
-                (rect.bottom())..=(rect.top())
-            }
+            SliderOrientation::Horizontal => (rect.left())..=(rect.right()),
+            SliderOrientation::Vertical => (rect.bottom())..=(rect.top()),
         }
     }
 
     fn rail_rect(&self, rect: &Rect, radius: f32) -> Rect {
         match self.orientation {
             SliderOrientation::Horizontal => Rect::from_min_max(
-                pos2(rect.left(), rect.center().y - 0.5*radius),
-                pos2(rect.right(), rect.center().y + 0.5*radius),
+                pos2(rect.left(), rect.center().y - 0.5 * radius),
+                pos2(rect.right(), rect.center().y + 0.5 * radius),
             ),
             SliderOrientation::Vertical => Rect::from_min_max(
                 pos2(rect.center().x - radius, rect.top()),
@@ -456,7 +461,7 @@ impl<'a> VideoSlider<'a> {
             ),
         }
     }
-    
+
     fn handle_radius(&self, rect: &Rect) -> f32 {
         let limit = match self.orientation {
             SliderOrientation::Horizontal => rect.height(),
@@ -474,14 +479,11 @@ impl<'a> VideoSlider<'a> {
 
     fn value_ui(&mut self, ui: &mut Ui, position_range: RangeInclusive<f32>) -> Response {
         // If [`DragValue`] is controlled from the keyboard and `step` is defined, set speed to `step`
-        let change = {
-            // Hold one lock rather than 4 (see https://github.com/emilk/egui/pull/1380).
-            let input = ui.input();
-
+        let change = ui.input(|input| {
             input.num_presses(Key::ArrowUp) as i32 + input.num_presses(Key::ArrowRight) as i32
                 - input.num_presses(Key::ArrowDown) as i32
                 - input.num_presses(Key::ArrowLeft) as i32
-        };
+        });
         let speed = match self.step {
             Some(step) if change != 0 => step,
             _ => self.current_gradient(&position_range),
@@ -573,7 +575,6 @@ impl<'a> Widget for VideoSlider<'a> {
 // Always clamps.
 // Logarithmic sliders are allowed to include zero and infinity,
 // even though mathematically it doesn't make sense.
-
 
 /// When the user asks for an infinitely large range (e.g. logarithmic from zero),
 /// give a scale that this many orders of magnitude in size.
