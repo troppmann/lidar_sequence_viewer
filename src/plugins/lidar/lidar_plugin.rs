@@ -17,7 +17,6 @@ impl Plugin for LidarPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(PlayerState::default())
             .add_startup_system(init_sequence)
-            .add_startup_system(load_config)
             .add_system(player)
             .add_system(buffer_next_frames)
             .add_system(handle_read_frames_task)
@@ -193,22 +192,14 @@ impl PlayerState {
 
 fn init_sequence(mut state: ResMut<PlayerState>, mut meshes: ResMut<Assets<Mesh>>, config: Res<PlayerConfig>) {
     state.mesh = Some(meshes.add(Mesh::from(shape::Cube { size: config.persistent.point_size })));
-    //TODO move default start scene to settings
-    let path = "../SemanticKITTI/dataset/sequences/00/".into();
-    if let Ok(sequence) = read_sequence_from_dir(path) {
-        state.set_sequence(sequence);
-    }    
+    if let Some(file_path) = &config.persistent.folder_path {
+        match read_sequence_from_dir(file_path.into()) {
+            Ok(sequence) => state.set_sequence(sequence),
+            Err(err) => println!("{err}"),
+        }    
+    }
 }
 
-fn load_config(
-    mut config: ResMut<PlayerConfig>,
-    mut clear_color: ResMut<ClearColor>,
-){
-    config.load();
-    println!("{:?}", confy::get_configuration_file_path("lidar_viewer", None));
-    let background_color = config.persistent.background_color;
-    clear_color.0 = Color::rgb_u8(background_color[0], background_color[1], background_color[2]);
-}
 
 fn player(
     mut commands: Commands,

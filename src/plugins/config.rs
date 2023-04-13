@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use bevy::{
-    prelude::{Color, Plugin, Resource},
+    prelude::*,
     utils::HashMap,
 };
 use serde::{Deserialize, Serialize};
@@ -19,7 +19,7 @@ pub struct Config {
     pub label_map: BTreeMap<u16, LabelInfo>,
     pub default_color: [u8; 3],
     pub background_color: [u8; 3],
-    pub file_path: Option<String>,
+    pub folder_path: Option<String>,
     pub camera_fov_degreas: f32,
     pub camera_speed: f32,
     pub point_size: f32,
@@ -74,7 +74,7 @@ impl Default for Config {
             ]),
             default_color: [180, 100, 25],
             background_color: [0, 41, 61],
-            file_path: None,
+            folder_path: None,
             camera_fov_degreas: 90.0,
             camera_speed: 10.0,
             point_size: 0.04,
@@ -131,5 +131,14 @@ pub struct ConfigPlugin;
 impl Plugin for ConfigPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.insert_resource(PlayerConfig::default());
+        app.add_startup_system(load_config);
     }
+}
+
+
+fn load_config(
+    mut config: ResMut<PlayerConfig>,
+){
+    config.load();
+    println!("{:?}", confy::get_configuration_file_path("lidar_viewer", None));
 }

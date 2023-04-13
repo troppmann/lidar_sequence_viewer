@@ -14,7 +14,11 @@ impl Plugin for ObserverPlugin {
     }
 }
 
-fn setup_camera(mut commands: Commands, config: Res<PlayerConfig>) {
+fn setup_camera(
+    mut commands: Commands,
+    config: Res<PlayerConfig>,
+    mut clear_color: ResMut<ClearColor>,
+) {
     let transform = Transform::from_xyz(5.0, 10.0, 10.0).looking_at(Vec3::ZERO, Vec3::Y);
     let (_, yaw, pitch) = transform.rotation.to_euler(EulerRot::ZYX);
     commands
@@ -31,6 +35,12 @@ fn setup_camera(mut commands: Commands, config: Res<PlayerConfig>) {
             yaw: DampedFloat::init(yaw),
             ..default()
         });
+    let background_color = config.persistent.background_color;
+    clear_color.0 = Color::rgb_u8(
+        background_color[0],
+        background_color[1],
+        background_color[2],
+    );
 }
 
 #[derive(Component)]
@@ -157,11 +167,12 @@ fn camera_control(
 
         // Apply movement update
         if axis_input != Vec3::ZERO {
-            let max_speed = config.persistent.camera_speed * if key_input.pressed(options.key_run) {
-                options.run_modifier
-            } else {
-                1.0
-            };
+            let max_speed = config.persistent.camera_speed
+                * if key_input.pressed(options.key_run) {
+                    options.run_modifier
+                } else {
+                    1.0
+                };
             options.velocity = axis_input.normalize() * max_speed;
         } else {
             let friction = options.friction.clamp(0.0, 1.0);
@@ -176,7 +187,6 @@ fn camera_control(
             + options.velocity.y * delta_time * Vec3::Y
             + options.velocity.z * delta_time * forward;
 
-        
         // Apply look update
         if btn.just_pressed(MouseButton::Right) {
             window.cursor.grab_mode = CursorGrabMode::Confined;
