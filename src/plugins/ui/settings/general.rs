@@ -9,7 +9,7 @@ pub fn window(
     mut ui_state: ResMut<UiState>,
     mut config: ResMut<PlayerConfig>,
     mut player: ResMut<PlayerState>,
-    mut clear_color: ResMut<ClearColor>
+    mut clear_color: ResMut<ClearColor>,
 ) {
     let ctx = egui_context.ctx_mut();
     egui::Window::new("General-Settings").open(&mut ui_state.general_settings_visible).resizable(true).vscroll(true).show(ctx, |ui| {
@@ -28,6 +28,10 @@ pub fn window(
                 config.save();
             }
             ui.end_row();
+            ui.label("Camera Speed");
+            if ui.add(egui::Slider::new(&mut config.persistent.camera_speed, 0.0..=100.0)).changed() {
+                config.save();
+            }
         });
     });
 }

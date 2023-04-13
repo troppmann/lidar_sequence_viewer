@@ -25,7 +25,7 @@ Renders the lidar data from the KITTI Benchmark[1,2].
 - [x] ToolTips
 - [x] Changeable Background Color
 - [x] Changeable Default Color
-- [ ] CameraSpeed Manipulation
+- [x] CameraSpeed Manipulation
 - [ ] Camera FOV changes
 - [ ] Error PopUp or log
 - [ ] Add changeable object size

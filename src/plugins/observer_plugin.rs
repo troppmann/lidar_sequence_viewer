@@ -2,6 +2,8 @@ use crate::math::smooth_damp;
 use bevy::{input::mouse::MouseMotion, prelude::*, window::CursorGrabMode};
 use bevy_egui::EguiContexts;
 
+use super::PlayerConfig;
+
 pub struct ObserverPlugin;
 
 impl Plugin for ObserverPlugin {
@@ -32,7 +34,7 @@ fn setup_camera(mut commands: Commands) {
 }
 
 #[derive(Component)]
-struct CameraController {
+pub struct CameraController {
     pub enabled: bool,
     pub sensitivity: f32,
     pub key_forward: KeyCode,
@@ -42,11 +44,10 @@ struct CameraController {
     pub key_up: KeyCode,
     pub key_down: KeyCode,
     pub key_run: KeyCode,
-    pub walk_speed: f32,
-    pub run_speed: f32,
+    pub run_modifier: f32,
     pub friction: f32,
-    pub pitch: DampedFloat,
-    pub yaw: DampedFloat,
+    pitch: DampedFloat,
+    yaw: DampedFloat,
     pub smooth_time: f32,
     pub velocity: Vec3,
     pub old_cursor_position: Option<Vec2>,
@@ -64,8 +65,7 @@ impl Default for CameraController {
             key_up: KeyCode::E,
             key_down: KeyCode::Q,
             key_run: KeyCode::LShift,
-            walk_speed: 10.0,
-            run_speed: 30.0,
+            run_modifier: 3.0,
             friction: 0.5,
             pitch: DampedFloat {
                 actual: 0.0,
@@ -114,6 +114,7 @@ fn camera_control(
     btn: Res<Input<MouseButton>>,
     mut mouse_events: EventReader<MouseMotion>,
     key_input: Res<Input<KeyCode>>,
+    config: Res<PlayerConfig>,
     mut query: Query<(&mut Transform, &mut CameraController), With<Camera>>,
     mut egui_ctx: EguiContexts,
 ) {
@@ -156,10 +157,10 @@ fn camera_control(
 
         // Apply movement update
         if axis_input != Vec3::ZERO {
-            let max_speed = if key_input.pressed(options.key_run) {
-                options.run_speed
+            let max_speed = config.persistent.camera_speed * if key_input.pressed(options.key_run) {
+                options.run_modifier
             } else {
-                options.walk_speed
+                1.0
             };
             options.velocity = axis_input.normalize() * max_speed;
         } else {
