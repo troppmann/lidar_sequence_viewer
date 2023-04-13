@@ -16,7 +16,6 @@ pub struct LidarPlugin;
 impl Plugin for LidarPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(PlayerState::default())
-            .insert_resource(PlayerConfig::default())
             .add_startup_system(init_sequence)
             .add_startup_system(load_config)
             .add_system(player)
