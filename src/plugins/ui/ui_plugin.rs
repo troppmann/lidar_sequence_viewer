@@ -132,7 +132,6 @@ fn menu_bar(
                     }
                 });
                 ui.menu_button("Playback", |ui| {
-                    //TODO replace button new with image_and_text
                     if ui
                         .add(
                             egui::Button::new(if player_state.is_paused() {

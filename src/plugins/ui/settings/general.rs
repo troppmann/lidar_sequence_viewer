@@ -10,7 +10,8 @@ pub fn window(
     mut config: ResMut<PlayerConfig>,
     mut player: ResMut<PlayerState>,
     mut clear_color: ResMut<ClearColor>,
-    mut query_projection: Query<&mut Projection>
+    mut query_projection: Query<&mut Projection>,
+    mut meshes: ResMut<Assets<Mesh>>,
 ) {
     let ctx = egui_context.ctx_mut();
     egui::Window::new("General-Settings").open(&mut ui_state.general_settings_visible).resizable(true).vscroll(true).show(ctx, |ui| {
@@ -25,6 +26,14 @@ pub fn window(
             ui.label("Default Label Color");
             if ui.color_edit_button_srgb(&mut config.persistent.default_color).changed() {
                 config.update_label_map();
+                player.request_update();
+                config.save();
+            }
+            ui.end_row();
+            ui.end_row();
+            ui.label("Point Size");
+            if ui.add(egui::DragValue::new(&mut config.persistent.point_size).clamp_range(0.0..=100.0).speed(0.01)).changed() {
+                player.set_mesh(meshes.add(Mesh::from(shape::Cube { size: config.persistent.point_size })));
                 player.request_update();
                 config.save();
             }
@@ -45,7 +54,6 @@ pub fn window(
                 }
                 config.save();
             }
-            ui.end_row();
             ui.end_row();
         });
     });

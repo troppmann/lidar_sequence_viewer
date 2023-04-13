@@ -22,7 +22,7 @@ pub struct Config {
     pub file_path: Option<String>,
     pub camera_fov_degreas: f32,
     pub camera_speed: f32,
-    pub object_size: f32,
+    pub point_size: f32,
 }
 impl From<(&str, [u8; 3])> for LabelInfo {
     fn from(value: (&str, [u8; 3])) -> Self {
@@ -77,7 +77,7 @@ impl Default for Config {
             file_path: None,
             camera_fov_degreas: 90.0,
             camera_speed: 10.0,
-            object_size: 0.004,
+            point_size: 0.04,
         }
     }
 }

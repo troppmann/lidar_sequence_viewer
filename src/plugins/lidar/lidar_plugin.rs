@@ -118,10 +118,9 @@ impl PlayerState {
     pub fn get_time_scale(&self) -> f64 {
         self.speed.time_scale
     }
-    pub fn get_sensof_fps(&self) -> f64 {
-        self.speed.sensor_fps
+    pub fn set_mesh(&mut self, mesh: Handle<Mesh>){
+        self.mesh = Some(mesh);
     }
-
     pub fn set_sequence(&mut self, sequence: Sequence){
         self.max_frame = sequence.frame_count - 1;
         self.sequence_number += 1;
@@ -192,8 +191,8 @@ impl PlayerState {
     }
 }
 
-fn init_sequence(mut state: ResMut<PlayerState>, mut meshes: ResMut<Assets<Mesh>>) {
-    state.mesh = Some(meshes.add(Mesh::from(shape::Cube { size: 0.04 })));
+fn init_sequence(mut state: ResMut<PlayerState>, mut meshes: ResMut<Assets<Mesh>>, config: Res<PlayerConfig>) {
+    state.mesh = Some(meshes.add(Mesh::from(shape::Cube { size: config.persistent.point_size })));
     //TODO move default start scene to settings
     let path = "../SemanticKITTI/dataset/sequences/00/".into();
     if let Ok(sequence) = read_sequence_from_dir(path) {
