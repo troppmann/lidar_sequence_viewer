@@ -60,6 +60,7 @@ impl Inspector{
     pub fn detect_point_under_curser(
         player: Res<PlayerState>,
         cameras: Query<(&Camera, &GlobalTransform)>,
+        config: Res<PlayerConfig>,
         mut query_window: Query<&mut Window>,
         mut inspector: ResMut<Self>
     ) 
@@ -80,9 +81,9 @@ impl Inspector{
         };
 
         //Assume all points are sphere with a radius
-        //TODO adjustable radius with precalculated square
         let mut min_distance = f32::MAX;
         let mut min_index = None;
+        let radius_squared = config.persistent.point_size * config.persistent.point_size;
         for (iter, point) in frame.points.iter().enumerate(){
             let sphere_pos_to_ray_pos = point.position - ray.origin;
             let projected_distance = sphere_pos_to_ray_pos.dot(ray.direction);
@@ -90,8 +91,7 @@ impl Inspector{
                 continue;
             }
             let distance_to_ray_squared = sphere_pos_to_ray_pos.length_squared() - projected_distance * projected_distance;
-            const RADIUS_SQUARED: f32 = 0.04 * 0.04;
-            if distance_to_ray_squared > RADIUS_SQUARED {
+            if distance_to_ray_squared > radius_squared {
                 continue;
             }
             if projected_distance < min_distance {
