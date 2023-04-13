@@ -1,4 +1,4 @@
-use bevy::{prelude::*, window::WindowMode};
+use bevy::{prelude::*, window::WindowMode, app::AppExit};
 use bevy_egui::{
     egui::{
         epaint::Shadow, style::Margin, Color32, Key, KeyboardShortcut, Modifiers, RichText, Stroke,
@@ -63,6 +63,7 @@ fn menu_bar(
     mut ui_state: ResMut<UiState>,
     mut player_state: ResMut<lidar::PlayerState>,
     mut inspector: ResMut<Inspector>,
+    mut exit: EventWriter<AppExit>,
 ) {
     let ctx = egui_context.ctx_mut();
     let frame = egui::Frame {
@@ -101,7 +102,9 @@ fn menu_bar(
                         ui.close_menu();
                     }
                     ui.separator();
-                    if ui.button("Exit").clicked() {}
+                    if ui.button("Exit").clicked() {
+                        exit.send(AppExit);
+                    }
                 });
 
                 ui.menu_button("View", |ui| {
