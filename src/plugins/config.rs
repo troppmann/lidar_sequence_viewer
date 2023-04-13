@@ -20,7 +20,7 @@ pub struct Config {
     pub default_color: [u8; 3],
     pub background_color: [u8; 3],
     pub file_path: Option<String>,
-    pub camera_fov: f32,
+    pub camera_fov_degreas: f32,
     pub camera_speed: f32,
     pub object_size: f32,
 }
@@ -75,7 +75,7 @@ impl Default for Config {
             default_color: [180, 100, 25],
             background_color: [0, 41, 61],
             file_path: None,
-            camera_fov: 90.0,
+            camera_fov_degreas: 90.0,
             camera_speed: 10.0,
             object_size: 0.004,
         }

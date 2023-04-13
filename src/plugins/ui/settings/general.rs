@@ -10,6 +10,7 @@ pub fn window(
     mut config: ResMut<PlayerConfig>,
     mut player: ResMut<PlayerState>,
     mut clear_color: ResMut<ClearColor>,
+    mut query_projection: Query<&mut Projection>
 ) {
     let ctx = egui_context.ctx_mut();
     egui::Window::new("General-Settings").open(&mut ui_state.general_settings_visible).resizable(true).vscroll(true).show(ctx, |ui| {
@@ -28,10 +29,24 @@ pub fn window(
                 config.save();
             }
             ui.end_row();
+            ui.end_row();
             ui.label("Camera Speed");
             if ui.add(egui::Slider::new(&mut config.persistent.camera_speed, 0.0..=100.0)).changed() {
                 config.save();
             }
+            ui.end_row();
+            ui.label("Camera FOV");
+            if ui.add(egui::Slider::new(&mut config.persistent.camera_fov_degreas, 0.0..=180.0)).changed() {
+                for mut projection in query_projection.iter_mut(){
+                    *projection = Projection::Perspective(PerspectiveProjection {
+                        fov: config.persistent.camera_fov_degreas.to_radians(),
+                        ..default()
+                    });
+                }
+                config.save();
+            }
+            ui.end_row();
+            ui.end_row();
         });
     });
 }

@@ -14,14 +14,14 @@ impl Plugin for ObserverPlugin {
     }
 }
 
-fn setup_camera(mut commands: Commands) {
+fn setup_camera(mut commands: Commands, config: Res<PlayerConfig>) {
     let transform = Transform::from_xyz(5.0, 10.0, 10.0).looking_at(Vec3::ZERO, Vec3::Y);
     let (_, yaw, pitch) = transform.rotation.to_euler(EulerRot::ZYX);
     commands
         .spawn(Camera3dBundle {
             transform,
             projection: Projection::Perspective(PerspectiveProjection {
-                fov: (90.0/360.0) * std::f32::consts::PI * 2.0,
+                fov: config.persistent.camera_fov_degreas.to_radians(),
                 ..default()
             }),
             ..default()
