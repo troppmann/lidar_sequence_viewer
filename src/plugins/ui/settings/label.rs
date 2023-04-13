@@ -4,15 +4,22 @@ use super::super::ui_plugin::UiState;
 use bevy::prelude::*;
 use bevy_egui::{*, egui::*};
 
+#[derive(Resource)]
 pub struct NewLabel {
-    init: bool,
     id: u16,
     info: LabelInfo,
 }
 impl Default for NewLabel{
     fn default() -> Self {
-        Self { init: false, id: 0, info: LabelInfo{color: [255,255,255], name: default()} }
+        Self { id: 0, info: LabelInfo{color: [255,255,255], name: default()} }
     }
+}
+
+pub fn init_new_label(mut new_label: ResMut<NewLabel>, config: Res<PlayerConfig>,) {
+    new_label.id = match config.persistent.label_map.last_key_value(){
+        Some((key, _)) => *key + 1,
+        None => 0,
+    };
 }
 
 pub fn window(
@@ -20,7 +27,7 @@ pub fn window(
     mut ui_state: ResMut<UiState>,
     mut config: ResMut<PlayerConfig>,
     mut player: ResMut<PlayerState>,
-    mut new_label: Local<NewLabel>,
+    mut new_label: ResMut<NewLabel>,
 ) {
     let ctx = egui_context.ctx_mut();
     egui::Window::new("Label-Settings").open(&mut ui_state.color_settings_visible).resizable(true).vscroll(true).show(ctx, |ui| {
@@ -56,14 +63,6 @@ pub fn window(
                 }
                 ui.end_row();
             }
-            //TODO move to startup system
-            if !new_label.init {
-                new_label.id = match config.persistent.label_map.last_key_value(){
-                    Some((key, _)) => *key + 1,
-                    None => 0,
-                };
-                new_label.init = true;
-            }
             ui.horizontal(|ui| {
                 if ui.button("➕").clicked() {
                     config.persistent.label_map.insert(new_label.id, new_label.info.clone());
@@ -84,8 +83,7 @@ pub fn window(
             ui.end_row();
         });
         ui.horizontal(|ui| {
-            //TODO: Change to reset icon with tooltip
-            if ui.button("Reset").clicked() {
+            if ui.button(RichText::from("↺").heading()).on_hover_text("Reset all labels").clicked() {
                 config.reset_label_map();
                 player.request_update();
                 request_save = true;

@@ -14,9 +14,10 @@ pub struct UiPlugin;
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(EguiPlugin)
-            .add_startup_system(setup)
             .insert_resource(UiState::default())
             .insert_resource(Inspector::default())
+            .insert_resource(settings::label::NewLabel::default())
+            .add_startup_systems((setup, settings::label::init_new_label))
             .add_systems((
                 task::handle_load_folder_task,
                 control_bar.before(handle_requests),
