@@ -84,6 +84,7 @@ pub fn read_sequence_from_dir(dir_path: PathBuf)-> Result<Sequence, SequenceRead
         Ok(0) => return Err(SequenceReadError::MissingFilesWithExtension("bin".into())),    
         Ok(count) => (count, velodyne_path),
         Err(SequenceReadError::FolderDontExist) => match count_folder_files_with_extension(&dir_path, "bin"){
+            Ok(0) => return Err(SequenceReadError::MissingFilesWithExtension("bin".into())),    
             Ok(count) => (count, dir_path.clone()),
             Err(e) => return Err(e),
         },
