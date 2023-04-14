@@ -27,7 +27,7 @@ Renders the lidar data from the KITTI Benchmark[1,2].
 - [x] Changeable Default Color
 - [x] CameraSpeed Manipulation
 - [x] Camera FOV changes
-- [ ] Error PopUp or log
+- [x] Error PopUp or log
 - [x] Add changeable point size
 ## References
 [1]&nbsp;&nbsp;&nbsp;Andreas Geiger, Philip Lenz, and Raquel Urtasun. Are we ready for Autonomous Driving? The KITTI Vision Benchmark Suite. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 2012

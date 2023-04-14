@@ -1,9 +1,6 @@
 use std::collections::BTreeMap;
 
-use bevy::{
-    prelude::*,
-    utils::HashMap,
-};
+use bevy::{prelude::*, utils::HashMap};
 use serde::{Deserialize, Serialize};
 
 type ColorRgbU8 = [u8; 3];
@@ -92,19 +89,30 @@ pub struct PlayerConfig {
 impl PlayerConfig {
     const APP_NAME: &str = "lidar_viewer";
     pub fn load(&mut self) {
-        let config: Config = match confy::load(PlayerConfig::APP_NAME, None) {
-            Ok(config) => config,
+        match confy::load(PlayerConfig::APP_NAME, None) {
+            Ok(config) => self.persistent = config,
             Err(error) => {
-                eprintln!("{error}");
+                let file_path = confy::get_configuration_file_path("lidar_viewer", None).unwrap_or_default();
+                rfd::MessageDialog::new()
+                    .set_title("Error")
+                    .set_description(&format!("Cannot read config file: {file_path:?}\n{error}"))
+                    .set_buttons(rfd::MessageButtons::Ok)
+                    .set_level(rfd::MessageLevel::Error)
+                    .show();
                 return;
             }
         };
-        self.persistent = config;
         self.update_label_map();
     }
     pub fn save(&self) {
         if let Err(error) = confy::store(PlayerConfig::APP_NAME, None, &self.persistent) {
-            eprintln!("{error}");
+            let file_path = confy::get_configuration_file_path("lidar_viewer", None).unwrap_or_default();
+            rfd::MessageDialog::new()
+                .set_title("Error")
+                .set_description(&format!("Cannot save config file: {file_path:?}\n{error}"))
+                .set_buttons(rfd::MessageButtons::Ok)
+                .set_level(rfd::MessageLevel::Error)
+                .show();
         };
     }
     pub fn reset_label_map(&mut self) {
@@ -135,10 +143,6 @@ impl Plugin for ConfigPlugin {
     }
 }
 
-
-fn load_config(
-    mut config: ResMut<PlayerConfig>,
-){
+fn load_config(mut config: ResMut<PlayerConfig>) {
     config.load();
-    println!("{:?}", confy::get_configuration_file_path("lidar_viewer", None));
 }
