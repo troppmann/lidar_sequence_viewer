@@ -4,7 +4,14 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-bevy = { version = "0.10", features = [] }
+bevy = { version = "0.10", default-features = false, features = [
+    "bevy_asset",
+    "bevy_render",
+    "bevy_winit",
+    "bevy_core_pipeline",
+    "bevy_pbr",
+] }
+bevy_embedded_assets = "0.7.0"
 # async
 futures-lite = "1.12.0"
 # rendering
@@ -17,7 +24,7 @@ nom = "7.1.1"
 # config
 ron = "0.8"
 serde = { version = "1", features = ["derive"] }
-confy = { version = "0.5.1", features = ["ron_conf"], default-features = false}
+confy = { version = "0.5.1", features = ["ron_conf"], default-features = false }
 
 [profile.dev]
 opt-level = 1
