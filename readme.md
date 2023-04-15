@@ -1,34 +1,30 @@
 # LiDAR Viewer
 Renders the lidar data from the KITTI Benchmark[1,2].
 
-## TODO
-- [x] Understand data
-- [x] Extract data in Rust
-- [x] Extract data in Bevy
-- [x] Render a frame
-- [x] Shader Instancing
-- [x] Load all frames into memory
-- [x] Render all frames back to back
-- [x] Render in realtime
-- [x] Create a videoplayer UI
-- [x] Manipulate time with the UI
-- [x] KeyboardInput & UI Overhall
-- [x] Render labeled information
-- [x] PlaySpeed Manipulation
-- [x] Load files dynamically
-- [x] Change Sequences 
-- [x] Pick Sequence UI
-- [x] Limit Memory Consumption
-- [x] Color GUI Config
-- [x] Able to open seperate label folder
-- [x] Display information about hovered item under cursor
-- [x] ToolTips
-- [x] Changeable Background Color
-- [x] Changeable Default Color
-- [x] CameraSpeed Manipulation
-- [x] Camera FOV changes
-- [x] Error PopUp or log
-- [x] Add changeable point size
+## Features
+- Renders lidar sequence data smoothly 
+- Sequence can be paused/played/advanced/fastered/slowered like a youtube video 
+- Low memory consumption
+- Fully controllable camera
+- Labels can be changed anytime
+
+https://user-images.githubusercontent.com/74185941/232229283-82436fdd-b555-477a-b34b-e764feb4a4ba.mp4
+
+
+
+
+https://user-images.githubusercontent.com/74185941/232229340-910e3a21-e183-4ecc-8f24-753d7a5a3f34.mp4
+
+## Controls
+
+#### Camera
+#### Player
+
+
+## Todo
+- [ ] Allow remmaping of keys
+- [ ] Short tutorial at first startup
+  
 ## References
 [1]&nbsp;&nbsp;&nbsp;Andreas Geiger, Philip Lenz, and Raquel Urtasun. Are we ready for Autonomous Driving? The KITTI Vision Benchmark Suite. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 2012
 
