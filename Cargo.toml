@@ -28,6 +28,9 @@ ron = "0.8"
 serde = { version = "1", features = ["derive"] }
 confy = { version = "0.5.1", features = ["ron_conf"], default-features = false }
 
+[target.'cfg(windows)'.build-dependencies]
+winres = "0.1"
+
 [profile.dev]
 opt-level = 1
 
