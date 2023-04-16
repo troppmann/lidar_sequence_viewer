@@ -20,7 +20,7 @@ pub struct LidarPlugin;
 impl Plugin for LidarPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(PlayerState::default())
-            .add_startup_system(init_sequence)
+            .add_startup_system(load_config)
             .add_system(player)
             .add_system(buffer_next_frames)
             .add_system(handle_read_frames_task)
@@ -203,11 +203,12 @@ impl PlayerState {
     }
 }
 
-fn init_sequence(
+fn load_config(
     mut state: ResMut<PlayerState>,
     mut meshes: ResMut<Assets<Mesh>>,
     config: Res<PlayerConfig>,
 ) {
+    state.set_sensor_fps(config.persistent.sensor_fps);
     state.mesh = Some(meshes.add(Mesh::from(shape::Cube {
         size: config.persistent.point_size,
     })));

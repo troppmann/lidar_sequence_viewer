@@ -20,6 +20,7 @@ pub struct Config {
     pub camera_fov_degreas: f32,
     pub camera_speed: f32,
     pub point_size: f32,
+    pub sensor_fps: f64,
 }
 impl From<(&str, [u8; 3])> for LabelInfo {
     fn from(value: (&str, [u8; 3])) -> Self {
@@ -75,6 +76,7 @@ impl Default for Config {
             camera_fov_degreas: 90.0,
             camera_speed: 10.0,
             point_size: 0.04,
+            sensor_fps: 10.0,
         }
     }
 }

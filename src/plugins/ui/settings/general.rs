@@ -38,6 +38,13 @@ pub fn window(
                 config.save();
             }
             ui.end_row();
+            ui.label("Sensor FPS");
+            if ui.add(egui::DragValue::new(&mut config.persistent.sensor_fps).clamp_range(0.0..=10000.0).speed(1.0)).changed() {
+                player.set_sensor_fps(config.persistent.sensor_fps);
+                player.request_update();
+                config.save();
+            }
+            ui.end_row();
             ui.end_row();
             ui.label("Camera Speed");
             if ui.add(egui::Slider::new(&mut config.persistent.camera_speed, 0.0..=100.0)).changed() {
