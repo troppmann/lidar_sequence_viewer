@@ -27,6 +27,9 @@ nom = "7.1.1"
 ron = "0.8"
 serde = { version = "1", features = ["derive"] }
 confy = { version = "0.5.1", features = ["ron_conf"], default-features = false }
+# icon reexport
+winit = { version = "0.28", default-features = false }
+image = { version = "0.24", default-features = false }
 
 [target.'cfg(windows)'.build-dependencies]
 winres = "0.1"

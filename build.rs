@@ -4,7 +4,7 @@ use std::io;
 fn main() -> io::Result<()> {
     #[cfg(windows)] {
         WindowsResource::new()
-            .set_icon("assets/logo.ico")
+            .set_icon("assets/logo/logo.ico")
             .compile()?;
     }
     Ok(())
