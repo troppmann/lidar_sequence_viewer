@@ -1,5 +1,6 @@
-# LiDAR Viewer
+# LiDAR Sequence Viewer
 Renders the lidar data from the KITTI Benchmark[1,2].
+
 
 ## Features
 - Renders lidar sequence data smoothly 
@@ -20,11 +21,15 @@ https://user-images.githubusercontent.com/74185941/232229340-910e3a21-e183-4ecc-
 #### Camera
 #### Player
 
+## Build from source
 
 ## Todo
 - [ ] Allow remmaping of keys
 - [ ] Short tutorial at first startup
-  
+
+## License
+
+
 ## References
 [1]&nbsp;&nbsp;&nbsp;Andreas Geiger, Philip Lenz, and Raquel Urtasun. Are we ready for Autonomous Driving? The KITTI Vision Benchmark Suite. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 2012
 
