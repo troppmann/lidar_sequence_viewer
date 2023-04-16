@@ -10,7 +10,6 @@ use bevy_embedded_assets::EmbeddedAssetPlugin;
 use plugins::*;
 use winit::window::Icon;
 
-
 fn main() {
     App::new()
         .add_startup_systems((setup_window, set_window_icon))
@@ -29,7 +28,7 @@ fn main() {
 
 fn setup_window(mut query_window: Query<&mut Window>) {
     let mut window = query_window.single_mut();
-    window.title = "Lidar Viewer".to_string();
+    window.title = "Lidar Sequence Viewer".to_string();
     window.position = WindowPosition::Centered(MonitorSelection::Current);
 }
 

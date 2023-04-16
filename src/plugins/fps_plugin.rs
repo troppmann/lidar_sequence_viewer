@@ -18,6 +18,6 @@ pub fn update_window_title(diagnostics: Res<Diagnostics>, mut query_window: Quer
         .get(FrameTimeDiagnosticsPlugin::FPS)
         .and_then(|fps| fps.average())
     {
-        window.title = format!("Lidar Viewer FPS {:.2}", fps);
+        window.title = format!("Lidar Sequence Viewer FPS {:.2}", fps);
     }
 }

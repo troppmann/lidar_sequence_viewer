@@ -89,12 +89,12 @@ pub struct PlayerConfig {
 }
 
 impl PlayerConfig {
-    const APP_NAME: &str = "lidar_viewer";
+    const APP_NAME: &str = "lidar_sequence_viewer";
     pub fn load(&mut self) {
-        match confy::load(PlayerConfig::APP_NAME, None) {
+        match confy::load(Self::APP_NAME, None) {
             Ok(config) => self.persistent = config,
             Err(error) => {
-                let file_path = confy::get_configuration_file_path("lidar_viewer", None).unwrap_or_default();
+                let file_path = confy::get_configuration_file_path(Self::APP_NAME, None).unwrap_or_default();
                 rfd::MessageDialog::new()
                     .set_title("Error")
                     .set_description(&format!("Cannot read config file: {file_path:?}\n{error}"))
@@ -107,8 +107,8 @@ impl PlayerConfig {
         self.update_label_map();
     }
     pub fn save(&self) {
-        if let Err(error) = confy::store(PlayerConfig::APP_NAME, None, &self.persistent) {
-            let file_path = confy::get_configuration_file_path("lidar_viewer", None).unwrap_or_default();
+        if let Err(error) = confy::store(Self::APP_NAME, None, &self.persistent) {
+            let file_path = confy::get_configuration_file_path(Self::APP_NAME, None).unwrap_or_default();
             rfd::MessageDialog::new()
                 .set_title("Error")
                 .set_description(&format!("Cannot save config file: {file_path:?}\n{error}"))
