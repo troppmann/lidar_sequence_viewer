@@ -340,6 +340,9 @@ impl<'a> VideoSlider<'a> {
     }
 
     fn position_from_value(&self, value: f64, position_range: RangeInclusive<f32>) -> f32 {
+        if *self.range().end() == 0.0 {
+            return *position_range.start() as f32;
+        }
         let normalized = normalized_from_value(value, self.range(), &self.spec);
         lerp(position_range, normalized as f32)
     }
@@ -379,7 +382,6 @@ impl<'a> VideoSlider<'a> {
             let value = self.get_value();
 
             let rail_rect = self.rail_rect(rect, 4.0);
-
             let position_1d = self.position_from_value(value, position_range.clone());
             ui.painter().add(epaint::RectShape {
                 rect: rail_rect,
