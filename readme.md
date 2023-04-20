@@ -9,7 +9,7 @@ Renders the lidar data from the KITTI Benchmark[1,2].
 - Fully controllable camera
 - Labels can be changed anytime
 
-https://user-images.githubusercontent.com/74185941/232229283-82436fdd-b555-477a-b34b-e764feb4a4ba.mp4
+https://user-images.githubusercontent.com/74185941/`232229283-82436fdd-b555-477a-b34b-e764feb4a4ba.mp4
 
 
 
@@ -19,7 +19,22 @@ https://user-images.githubusercontent.com/74185941/232229340-910e3a21-e183-4ecc-
 ## Controls
 
 #### Camera
-#### Player
+Pressing `Right Mouse Button` let you control the cameras view. To move the camera use:
+| Key           | Function | | Key | Function |
+|:-----:   | ----------- | - | :-: | -----|
+| `w`        | Forward | | `q`     | Up
+| `s`     | Backwards |  | `e`     | Down |
+| `a`     | Left |  | | |
+| `d`     | Right |  | | |
+
+#### Sequence Player
+
+| Key           | Function | | Key | Function |
+|:-----:   | ----------- | - | :-: | -----|
+| `Space`        | Forward | | `→`     | Up
+| ` `     | Backwards |  | `←`     | Down |
+| `►`     | Left |  | | |
+| `d`     | Right |  | | |
 
 ## Build from source
 
