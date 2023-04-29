@@ -10,7 +10,7 @@ Renders the lidar data from the KITTI Benchmark[1,2].
 - Labels can be changed anytime
 - Single executable, without installer
 
-https://user-images.githubusercontent.com/74185941/233684697-85746a16-c2c5-4345-9683-36c1af6f9866.mp4
+https://user-images.githubusercontent.com/74185941/233689260-8876c7af-5834-45e7-b621-24de6f3a5e1c.mp4
 
 #### Controls
 ###### Camera
