@@ -49,14 +49,14 @@ sequence
 Each frame of a sequence is stored in a separate file. The frame number is the filename. 
 A valid sequence starts with the filename 000000 and increases the number by 1 for each frame. The data of a frame is further divided:
 - '######.bin' file containing the points position and remission
-- '######.label' file is optional and contains  the classification and object id
+- '######.label' file is optional and contains the points classification and object id
   
 To get the whole SemanticKitty dataset(~80GB) with 22 sequences follow the instructions on [www.semantic-kitti.org](http://www.semantic-kitti.org/dataset.html#download), its also a great source for additional information [1,2].
 
-A small example sequence(140MB) can be downloaded from the [release page](TODO). The example sequence contains 100 frames extracted from sequence 08 of the SemanticKitty dataset and follows the [Creative Commons BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) license.
+A small example sequence(140MB) can be downloaded from the [Release](../../releases/latest) page. The example sequence contains 100 frames extracted from sequence 08 of the SemanticKitty dataset and follows the [Creative Commons BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) license.
 
 #### Build from source
-A prebuilt executable can be found on the Release page, or the project can easily be build.
+A prebuilt executable can be found on the [Release](../../releases/latest) page, or the project can easily be build.
 To compile the project `rust` and `cargo` have to be installed. To setup `rust` and `cargo` follow the instructions on [www.rust-lang.org](https://www.rust-lang.org/tools/install).
 
 ```bash
