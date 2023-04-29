@@ -1,9 +1,8 @@
 # LiDAR Sequence Viewer
-Renders the lidar data from the KITTI Benchmark[1,2].
-
+LiDAR Sequence Viewer is a software to view lidar sequences easily.
 
 #### Features
-- Renders lidar sequence smoothly 
+- Renders lidar sequences smoothly 
 - Sequence can be paused/played/advanced/fastened/slowed like a YouTube video 
 - Low memory consumption
 - Fully controllable camera
@@ -52,9 +51,9 @@ A valid sequence starts with the filename 000000 and increases the number by 1 f
 - '######.bin' file containing the points position and remission
 - '######.label' file is optional and contains  the classification and object id
   
-To get the whole SemanticKitty dataset(~80GB) with 22 sequences follow the instructions on [www.semantic-kitti.org](http://www.semantic-kitti.org/dataset.html#download), its also a great source for additional information.
+To get the whole SemanticKitty dataset(~80GB) with 22 sequences follow the instructions on [www.semantic-kitti.org](http://www.semantic-kitti.org/dataset.html#download), its also a great source for additional information [1,2].
 
-A small example sequence(140MB) can be downloaded from the [release page](TODO). The example sequence contains 100 frames extracted from sequence 08 of the SemanticKitty dataset and follows the [Creative Commons Attribution-NonCommercial-ShareAlike](https://creativecommons.org/licenses/by-nc-sa/4.0/) license.
+A small example sequence(140MB) can be downloaded from the [release page](TODO). The example sequence contains 100 frames extracted from sequence 08 of the SemanticKitty dataset and follows the [Creative Commons BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) license.
 
 #### Build from source
 A prebuilt executable can be found on the Release page, or the project can easily be build.
@@ -81,5 +80,3 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 [1]&nbsp;&nbsp;&nbsp;J. Behley and M. Garbade and A. Milioto and J. Quenzel and S. Behnke and C. Stachniss and J. Gall. SemanticKITTI: A Dataset for Semantic Scene Understanding of LiDAR Sequences. Proc. of the IEEE/CVF International Conference on Computer Vision (ICCV), 2019
 
 [2]&nbsp;&nbsp;&nbsp;Andreas Geiger, Philip Lenz, and Raquel Urtasun. Are we ready for Autonomous Driving? The KITTI Vision Benchmark Suite. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 2012
-
-TODO https://github.com/PRBonn/semantic-kitti-api

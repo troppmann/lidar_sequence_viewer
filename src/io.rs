@@ -56,7 +56,7 @@ impl std::fmt::Display for SequenceReadError{
             SequenceReadError::ReadFolder(error) => write!(formatter, "Cannot read folder {}", error),
             SequenceReadError::MissingFilesWithExtension(extension) => write!(formatter, "No '{}'-Files in Folder.", extension),
             SequenceReadError::LabelFilesCountMissmatch{expected, received} => 
-                write!(formatter, "The amount of label files missmatch the sequences frame amount.\n Label Files: {}\n Frames in Seqeunce:{}", received, expected),
+                write!(formatter, "The amount of label files mismatch the sequences frame amount.\n Label Files: {}\n Frames in Sequence:{}", received, expected),
          }
     }
 }
