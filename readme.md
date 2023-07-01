@@ -58,7 +58,11 @@ A small example sequence(140MB) can be downloaded from the [Release](../../relea
 #### Build from source
 A prebuilt executable can be found on the [Release](../../releases/latest) page, or the project can easily be build.
 To compile the project `rust` and `cargo` have to be installed. To setup `rust` and `cargo` follow the instructions on [www.rust-lang.org](https://www.rust-lang.org/tools/install).
+To complete the development environment:
+- Windows: Install Visual Studio with the "Desktop development with C++" workload.
+- Ubuntu/Debian: `sudo apt install build-essential libglib2.0-dev libgtk-3-dev`
 
+Build with the following command:
 ```bash
 # inside project folder
 $ cargo run --release
